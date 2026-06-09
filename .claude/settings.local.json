@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(\"���� �Ϸ�: generate_cp001.js\")",
+      "mcp__salesforce-data-cloud__list_data_extensions",
+      "mcp__salesforce-data-cloud__get_de_rows",
+      "Bash(node generate_campaign_definition.js CP_016_신규회원웰컴이메일_20260609.xlsx campaign_data.json)",
+      "Bash(del \"C:\\\\Users\\\\vvpp1\\\\Desktop\\\\mce-package-main\\\\campaign_data.json\")",
+      "mcp__salesforce-data-cloud__search_data_extension",
+      "mcp__salesforce-data-cloud__list_journeys",
+      "mcp__salesforce-data-cloud__create_journey",
+      "Bash(gh auth *)",
+      "PowerShell(\"user.name : \" + \\(git config --global user.name\\); \"user.email: \" + \\(git config --global user.email\\); \"credential.helper: \" + \\(git config --global credential.helper\\))"
+    ]
+  }
+}

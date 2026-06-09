@@ -1,0 +1,350 @@
+# sf-mce-mcp
+
+Salesforce Marketing Cloud Engagement (MCE) MCP 서버입니다. Claude Code에서 SFMC의 주요 기능을 자연어로 조작할 수 있도록 도구(Tool)를 제공합니다.
+
+---
+
+## 개요
+
+| 항목 | 내용 |
+|------|------|
+| **서버명** | `sf-mce-mcp` |
+| **연동 플랫폼** | Salesforce Marketing Cloud Engagement |
+| **주요 기능** | Journey Builder, Data Extension, Email/SMS 발송, Automation Studio, Content Builder |
+| **전용 에이전트** | `mce-topic-agent` → `mce-planning-agent` → `mce-journey-agent` (3-에이전트 통합 흐름) |
+
+---
+
+## 서버 아키텍처
+
+`sf-mce-mcp`는 로컬에서 실행되는 서버가 아닌 **Salesforce가 호스팅하는 원격 MCP 서버**입니다.
+
+```
+https://mai-mce-mcp-cdp1.sfdc-yfeipo.svc.sfdcfc.net/t/<테넌트ID>/c/<세션토큰>/api/mcp
+```
+
+- 별도의 서버 설치, 빌드, 실행이 필요 없습니다
+- SFMC 계정(테넌트)마다 고유한 엔드포인트가 자동 할당됩니다
+- 모든 SFMC API 호출은 Salesforce 인프라 내에서 처리됩니다
+
+---
+
+## 설치 및 연결
+
+### 1단계: Marketing Cloud Installed Package 설정
+
+Marketing Cloud에서 API 연동용 패키지를 생성합니다.
+
+1. Marketing Cloud 로그인 후 **Administration** 이동
+2. **Installed Packages** 클릭
+3. **New** 버튼으로 새 패키지 생성
+4. 패키지 이름 입력 후 **Add Component** 클릭
+5. Component 유형: **API Integration** 선택
+6. Integration 유형: **Server-to-Server** 선택
+7. 아래 권한(Scope) 설정 후 저장:
+
+| 카테고리 | 권한 |
+|----------|------|
+| Email | Read, Write, Send |
+| Journeys | Read, Write, Execute |
+| List and Subscribers | Read, Write |
+| Data Extensions | Read, Write |
+| Contacts | Read, Write |
+| Automation | Read, Write, Execute |
+| SMS | Read, Write, Send |
+| Push | Read, Write, Send |
+
+8. 저장 후 생성된 **Client ID**, **Client Secret**, **MID(Account ID)** 확인
+9. 인증 URL(`https://xxxxxxxxx.auth.marketingcloudapis.com`)에서 **32자리 Subdomain** 확인
+
+---
+
+### 2단계: Claude Code에 MCP 서버 연결
+
+```bash
+claude mcp add sf-mce-mcp
+```
+
+연결 확인:
+
+```
+/mcp
+```
+
+성공 시 `Authentication successful. Connected to sf-mce-mcp.` 메시지가 표시됩니다.
+
+---
+
+## 통합 캠페인 에이전트 (3-에이전트 흐름)
+
+사용자가 만들고 싶은 캠페인을 **간략한 한 문장**(예: "신규 회원을 위한 캠페인 생성")으로 입력하면,
+오케스트레이터([CLAUDE.md](CLAUDE.md))가 3개의 서브에이전트를 순서대로 구동하여 정확한 MCE 캠페인을 완성합니다.
+
+```
+사용자 입력
+  → ① mce-topic-agent   : 연결된 DE 분석 → 생성 가능한 캠페인 후보 추천 → 사용자가 선택
+  → [모드 선택: 수동 / 자동]
+  → ② mce-planning-agent : 선택 캠페인의 Plan 설계 + xlsx 정의서 생성
+  → ③ mce-journey-agent  : Plan/정의서 기반 SFMC Journey 생성 (기본 Draft)
+  → 결과 보고
+```
+
+| 에이전트 | 역할 | 모델 |
+|---|---|---|
+| `mce-topic-agent` | MC에 연결된 DE를 읽어 **생성 가능한 캠페인 목록** 추천 (모드 무관) | sonnet |
+| `mce-planning-agent` | 선택 캠페인의 **Plan 설계 + 정의서(xlsx) 생성** | sonnet |
+| `mce-journey-agent` | 정의서 기반 **Journey Builder 다단계 플로우 생성** | opus |
+
+**실행 모드 (STEP 2부터 적용)**
+- **수동(Manual)**: Plan 구성을 사용자와 대화로 합의한 뒤 정의서/Journey 생성, 생성 전 승인.
+- **자동(Auto)**: 에이전트가 대화 없이 Plan 기획 → 정의서 → Journey 생성까지 일괄 진행.
+
+**공통 기능:**
+- 연결된 DE/필드 분석 기반 캠페인 추천
+- CSV/XLSX/Google Sheets 정의서 파싱 및 MCE 컴포넌트 자동 생성
+- Journey Builder 다단계 플로우(Decision/Engagement Split, Wait, Email) 구성
+- Event Definition + Automation 스케줄(Recurring/On Activation) 설정
+- 한국어 정의서 완전 지원
+
+---
+
+## 제공 도구 목록
+
+### Data Extension (DE)
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_get_data_extensions` | DE 목록 검색 조회 |
+| `sfmc_get_data_extension` | 단일 DE 상세 조회 |
+| `sfmc_get_data_extension_fields` | DE 필드 목록 조회 |
+| `sfmc_get_data_extension_folders` | DE 폴더 목록 조회 |
+| `sfmc_get_data_extensions_by_category` | 카테고리별 DE 조회 |
+| `sfmc_get_data_extension_link` | DE 링크 조회 |
+| `sfmc_create_data_extension` | DE 생성 |
+| `sfmc_create_data_extension_field_async` | DE 필드 추가 (비동기) |
+| `sfmc_update_data_extension` | DE 수정 |
+| `sfmc_update_data_extension_field_async` | DE 필드 수정 (비동기) |
+| `sfmc_delete_data_extension` | DE 삭제 |
+| `sfmc_clear_data_extension_data` | DE 데이터 전체 초기화 |
+| `sfmc_retrieve_data_extension_record` | DE 레코드 조회 |
+| `sfmc_upsert_data_extension_record` | DE 레코드 삽입/수정 |
+| `sfmc_data_extension_trigger` | DE Entry 트리거 JSON 생성 |
+
+### Journey Builder
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_get_journeys` | Journey 목록 조회 |
+| `sfmc_get_journey` | 단일 Journey 상세 조회 (ASCII 플로우 시각화 포함) |
+| `sfmc_get_journey_versions` | Journey 버전 목록 조회 |
+| `sfmc_get_journey_link` | Journey UI 링크 조회 |
+| `sfmc_get_journey_publish_status` | Journey 발행 상태 조회 |
+| `sfmc_create_journey` | Journey 생성 (기본) |
+| `sfmc_create_journey_builder_journey` | Journey 생성 (워크플로우 가이드 포함) |
+| `sfmc_update_journey` | Journey 수정 |
+| `sfmc_publish_journey` | Journey 발행 |
+| `sfmc_pause_journey` | Journey 일시정지 |
+| `sfmc_resume_journey` | Journey 재개 |
+| `sfmc_stop_journey` | Journey 중지 |
+| `sfmc_delete_journey` | Journey 삭제 |
+| `sfmc_republish_journey_content` | Journey 콘텐츠 재발행 |
+| `sfmc_fire_journey_event` | Journey API 이벤트 발동 |
+| `sfmc_insert_contacts_into_journey_async` | Journey 연락처 일괄 삽입 (비동기) |
+| `sfmc_insert_contacts_into_journey_status` | 연락처 삽입 상태 확인 |
+| `sfmc_exit_contact_from_journey` | Journey에서 연락처 제거 |
+| `sfmc_exit_contact_from_journey_status` | 연락처 제거 상태 확인 |
+
+### Journey 액티비티 빌더
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_email_activity` | Email 액티비티 JSON 생성 |
+| `sfmc_sms_activity` | SMS 액티비티 JSON 생성 |
+| `sfmc_wait_activity` | Wait 액티비티 JSON 생성 |
+| `sfmc_decision_split_activity` | Decision Split JSON 생성 |
+| `sfmc_random_split_activity` | Random Split JSON 생성 |
+| `sfmc_engagement_decision_activity` | Engagement Decision Split JSON 생성 (이메일 오픈/클릭 기반) |
+| `sfmc_einstein_sto_activity` | Einstein STO(최적 발송 시간) 액티비티 JSON 생성 |
+| `sfmc_einstein_engagement_frequency_activity` | Einstein Engagement Frequency Split JSON 생성 |
+
+### Event Definition
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_get_event_definitions` | Event Definition 목록 조회 |
+| `sfmc_get_event_definition` | 단일 Event Definition 조회 |
+| `sfmc_create_event_definition` | Event Definition 생성 (APIEvent / EmailAudience) |
+| `sfmc_update_event_definition` | Event Definition 수정 |
+| `sfmc_delete_event_definition` | Event Definition 삭제 |
+| `sfmc_api_event_trigger` | API Event 트리거 JSON 생성 |
+
+### Email
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_create_email` | 이메일 생성 |
+| `sfmc_create_email_template` | 이메일 템플릿 생성 |
+| `sfmc_create_email_send_definition` | 이메일 발송 정의 생성 |
+| `sfmc_send_transactional_email` | 트랜잭셔널 이메일 발송 |
+| `sfmc_refresh_transactional_email` | 트랜잭셔널 이메일 갱신 |
+| `sfmc_get_transactional_send_status` | 트랜잭셔널 발송 상태 조회 |
+| `sfmc_create_triggered_send_definition` | Triggered Send 정의 생성 |
+| `sfmc_republish_triggered_send` | Triggered Send 재발행 |
+| `sfmc_get_triggered_send_summary` | Triggered Send 요약 조회 |
+| `sfmc_get_email_subscription_status` | 이메일 구독 상태 조회 |
+| `sfmc_get_send_classifications` | 발송 분류(Send Classification) 조회 |
+| `sfmc_get_sender_profiles` | 발신자 프로필 조회 |
+
+### SMS
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_create_sms` | SMS 콘텐츠 에셋 생성 |
+| `sfmc_create_sms_definition` | SMS 발송 정의 생성 |
+| `sfmc_create_sms_send_definition` | SMS Send Definition 생성 |
+| `sfmc_get_sms_definition` | SMS 정의 단건 조회 |
+| `sfmc_get_sms_definitions` | SMS 정의 목록 조회 |
+| `sfmc_send_outbound_sms_message` | 아웃바운드 SMS 즉시 발송 |
+| `sfmc_get_sms_subscription_status` | SMS 구독 상태 조회 |
+| `sfmc_get_mobileconnect_codes` | MobileConnect 코드 조회 |
+| `sfmc_create_mobileconnect_keyword` | MobileConnect 키워드 생성 |
+
+### Content Builder
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_get_content_assets` | 콘텐츠 에셋 목록 조회 |
+| `sfmc_get_content_builder_asset` | 콘텐츠 에셋 단건 조회 |
+| `sfmc_create_content_builder_asset` | 콘텐츠 에셋 생성 |
+| `sfmc_update_content_builder_asset` | 콘텐츠 에셋 수정 |
+| `sfmc_search_content_builder_assets` | 콘텐츠 에셋 검색 |
+| `sfmc_get_content_categories` | 콘텐츠 카테고리 조회 |
+
+### Automation Studio
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_get_automations` | Automation 목록 조회 |
+| `sfmc_get_automation` | Automation 단건 조회 |
+| `sfmc_get_automation_instance` | Automation 실행 인스턴스 조회 |
+| `sfmc_get_automation_categories` | Automation 카테고리 조회 |
+| `sfmc_create_automation` | Automation 생성 |
+| `sfmc_update_automation` | Automation 수정 |
+| `sfmc_run_automation` | Automation 즉시 실행 |
+| `sfmc_run_automation_activities` | Automation 특정 액티비티 실행 |
+
+### SQL Query (Automation Studio)
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_create_sql_query` | SQL Query 액티비티 생성 |
+| `sfmc_get_sql_query` | SQL Query 단건 조회 |
+| `sfmc_get_sql_queries` | SQL Query 목록 조회 |
+| `sfmc_update_sql_query` | SQL Query 수정 |
+| `sfmc_run_sql_query` | SQL Query 즉시 실행 |
+| `sfmc_validate_sql_query` | SQL Query 유효성 검사 |
+
+### 연락처 및 구독자
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_get_contact_key_by_email_address` | 이메일 주소로 Contact Key 조회 |
+| `sfmc_retrieve_contact_status` | 연락처 상태 조회 |
+| `sfmc_update_contact_attributes` | 연락처 속성 수정 |
+| `sfmc_search_attributes` | 연락처 속성 검색 |
+| `sfmc_get_list_subscribers` | 구독 목록의 구독자 조회 |
+| `sfmc_get_lists` | 구독 목록 조회 |
+
+### Push 알림
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_send_push_notification` | 푸시 알림 발송 |
+| `sfmc_get_push_opt_in_status_by_subscriber_key` | Subscriber Key로 푸시 수신 동의 상태 조회 |
+
+### 기타 유틸리티
+
+| 도구 | 설명 |
+|------|------|
+| `sfmc_get_timezones` | 사용 가능한 타임존 목록 조회 |
+| `sfmc_describe_object` | SFMC 오브젝트 스키마 조회 (SOAP API) |
+
+---
+
+## 사용 예시
+
+### Journey 생성
+
+```
+welcome Journey를 만들어줘.
+- 진입 트리거: DE Key = 1sgHo00000001MNIAY_85RHo00000000ZMMAY_I
+- 액티비티: 이메일 → Wait 2일 → Engagement Split (오픈 여부)
+- 재진입: 불가
+```
+
+### Data Extension 조회
+
+```
+최근 생성된 Data Extension 1개만 찾아줘
+```
+
+### Journey 수정
+
+```
+welcome Journey의 Wait를 1일로 수정해줘
+```
+
+### SQL Query 실행
+
+```
+All_Customer DE에서 오늘 가입한 회원만 조회하는 SQL Query를 실행해줘
+```
+
+---
+
+## Journey 생성 워크플로우
+
+`sfmc_create_journey_builder_journey` 도구는 5단계 워크플로우를 따릅니다:
+
+```
+Step 1: Journey 이름 설정
+Step 2: 진입 방식 + 재진입 설정 (API Event / Data Extension)
+Step 3: 채널 + 에셋 결정 (Email / SMS / 기존 사용 여부)
+Step 4: 에셋 준비 (Event Definition, 트리거, 액티비티 JSON 생성)
+Step 5: Journey 최종 생성
+```
+
+### Engagement Split 주의사항
+
+Engagement Split(오픈/클릭 기반)은 **반드시 선행 Email 액티비티가 필요**합니다.
+
+```
+올바른 플로우: 이메일 액티비티 → Wait → Engagement Split
+잘못된 플로우: Wait → Engagement Split (동작하지 않음)
+```
+
+---
+
+## 관련 파일
+
+```
+mce-package-main/
+├── README.md                          # 이 파일
+├── CLAUDE.md                          # 통합 오케스트레이터 (모드 선택 + 3단계 흐름)
+├── generate_campaign_definition.js    # xlsx 정의서 생성 스크립트
+├── campaign_definitions/              # 생성된 정의서 보관
+└── .claude/
+    ├── settings.json                  # MCP 권한 설정
+    └── agents/
+        ├── mce-topic-agent.md         # ① 주제 선정 (DE 분석 → 캠페인 추천)
+        ├── mce-planning-agent.md      # ② 기획 / 정의서 생성
+        └── mce-journey-agent.md       # ③ Journey 생성
+```
+
+---
+
+## 참고
+
+- Salesforce Marketing Cloud REST API: `https://<subdomain>.rest.marketingcloudapis.com`
+- Salesforce Marketing Cloud SOAP API: `https://<subdomain>.soap.marketingcloudapis.com`
+- Journey Builder API Version: `1.0`
