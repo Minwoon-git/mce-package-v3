@@ -1,6 +1,6 @@
 ---
 name: "mce-topic-agent"
-description: "Use this agent as STEP 1 of the unified MCE campaign flow: when the user states a brief campaign intent (e.g. '신규 회원을 위한 캠페인 생성', '이탈 고객 캠페인 만들어줘'), this agent reads the Data Extensions connected to the Marketing Cloud account, matches them to the intent, and returns a list of feasible campaign candidates the user can build. It does NOT plan, write definitions, or create journeys — it only analyzes DEs and recommends campaign topics. Hand off the selected campaign to mce-planning-agent.\n\n<example>\nuser: \"신규 회원을 위한 캠페인 생성\"\nassistant: mce-topic-agent를 호출하여 연결된 DE를 분석하고 만들 수 있는 캠페인 후보를 추천합니다.\n</example>\n\n<example>\nuser: \"이탈 고객 대상으로 뭘 만들 수 있어?\"\nassistant: mce-topic-agent를 호출하여 이탈 관련 DE 기반 캠페인 후보를 나열합니다.\n</example>"
+description: "[DEPRECATED — 사용 안 함] 보존용 참고 파일. 이 에이전트는 더 이상 자동 호출되지 않습니다. MCE 캠페인 주제 선정/DE 분석은 모두 CLAUDE.md(메인 루프)가 STEP 1에서 직접 수행합니다. 이 에이전트를 절대 자동으로 호출하지 마세요. 사용자가 명시적으로 이 파일명을 지정한 경우에만 참고하세요."
 model: sonnet
 color: green
 memory: project

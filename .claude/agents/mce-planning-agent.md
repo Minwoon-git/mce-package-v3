@@ -1,6 +1,6 @@
 ---
 name: "mce-planning-agent"
-description: "Use this agent as STEP 2 of the unified MCE campaign flow: after a campaign topic has been selected (via mce-topic-agent or stated by the user), this agent designs the Journey Plan (step-by-step structure) AND generates the 2-tab xlsx campaign definition file (캠페인 개요 + 저니 구조) saved to campaign_definitions/. In AUTO mode it plans everything with MCE defaults; in MANUAL mode the orchestrator finalizes decisions through dialogue and then calls this agent to materialize the same definition. It does NOT create Journeys in SFMC — hand off the generated file path to mce-journey-agent for that.\n\n<example>\nuser: \"1번 신규회원 웰컴 캠페인으로, 진입 DE는 TEST_MCE_CAMPAIGN_DE. 정의서 만들어줘.\"\nassistant: mce-planning-agent를 호출하여 Plan을 설계하고 xlsx 정의서를 생성합니다.\n</example>\n\n<example>\nuser: \"장바구니 이탈 리마인드 캠페인 기획하고 엑셀로 정리해줘.\"\nassistant: mce-planning-agent를 호출하여 Journey Plan과 정의서를 생성합니다.\n</example>"
+description: "[DEPRECATED — 사용 안 함] 보존용 참고 파일. 이 에이전트는 더 이상 자동 호출되지 않습니다. MCE 캠페인 기획/Plan 설계/xlsx 정의서 생성은 모두 CLAUDE.md(메인 루프)가 STEP 2에서 직접 수행합니다. 이 에이전트를 절대 자동으로 호출하지 마세요. 사용자가 명시적으로 이 파일명을 지정한 경우에만 참고하세요."
 model: sonnet
 color: yellow
 memory: project

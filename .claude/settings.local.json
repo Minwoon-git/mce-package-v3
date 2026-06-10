@@ -10,7 +10,20 @@
       "mcp__salesforce-data-cloud__list_journeys",
       "mcp__salesforce-data-cloud__create_journey",
       "Bash(gh auth *)",
-      "PowerShell(\"user.name : \" + \\(git config --global user.name\\); \"user.email: \" + \\(git config --global user.email\\); \"credential.helper: \" + \\(git config --global credential.helper\\))"
+      "PowerShell(\"user.name : \" + \\(git config --global user.name\\); \"user.email: \" + \\(git config --global user.email\\); \"credential.helper: \" + \\(git config --global credential.helper\\))",
+      "mcp__sf-mce-mcp__sfmc_get_data_extension_folders",
+      "mcp__sf-mce-mcp__sfmc_get_data_extensions_by_category",
+      "Bash(node generate_campaign_definition.js \"CP_017_신규회원온보딩시리즈_20260610.xlsx\" campaign_data.json)",
+      "Bash(node generate_campaign_definition.js CP_018_등급별재활성화혜택_20260610.xlsx campaign_data.json)",
+      "Bash(node generate_campaign_definition.js CP_019_생일쿠폰_열람분기Journey_20260610.xlsx campaign_data.json)",
+      "Bash(del campaign_data.json)",
+      "Bash(git init *)",
+      "Bash(git remote *)",
+      "Bash(git fetch *)",
+      "Bash(git ls-tree *)",
+      "Bash(git reset *)",
+      "Bash(git branch *)",
+      "Bash(git add *)"
     ]
   }
 }

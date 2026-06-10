@@ -273,3 +273,21 @@
 - 미반영(이 환경 한계): EmailAudience 엔트리/Recurring 스케줄(매일 09:00, 시작 2026-06-10, tz 48)/No re-entry(OnceAndDone)/Email(Welcome_Email 63563) 액티비티/Wait & Exit(1 Day) 전부 미설정 — 사용 가능한 도구(create_journey)가 단일 활동 쉘만 생성하며 활동·스케줄·재진입 파라미터를 지원하지 않음
 - 한글 이름으로는 create_journey가 400 오류 → ASCII 이름으로 생성됨
 - 정의서: campaign_definitions/CP_016_신규회원웰컴이메일_20260609.xlsx
+
+## 2026-06-10 02:19
+- 캠페인 ID: CP_017
+- Journey 명: 신규회원 온보딩 시리즈
+- Journey ID: a4920f81-5d06-47f8-8cc6-2e72cebc5dc9
+- 상태: 성공 (Draft / 미발행)
+
+## 2026-06-10 02:44
+- 캠페인 ID: CP_018
+- Journey 명: 등급별 재활성화 혜택
+- Journey ID: b1800ea3-151b-4f8b-85c4-7dc1a4251e46
+- 상태: 성공 (Draft / 미발행)
+
+## 2026-06-10 02:54
+- 캠페인 ID: CP_019
+- Journey 명: 생일쿠폰_열람분기Journey
+- Journey ID: da0c4a55-06fd-4b1e-8d41-8bd90f6a9c9c
+- 상태: 성공 (Draft / 미발행)

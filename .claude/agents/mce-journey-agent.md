@@ -1,6 +1,6 @@
 ---
 name: "mce-journey-agent"
-description: "Use this agent when the user wants to CREATE Journeys in SFMC from an existing campaign definition file (xlsx, CSV, or Google Sheets). Triggers: user provides or references a definition file and asks to create/execute journeys, OR after mce-planning-agent has generated an xlsx file. This agent reads the definition, calls sfmc_create_event_definition and sfmc_create_journey_builder_journey for each campaign ID, and reports results. It does NOT generate definition files — use mce-planning-agent for that.\n\n<example>\nuser: \"campaign_definitions/CP_001_웰컴Journey_20260603.xlsx 파일로 저니 만들어줘.\"\nassistant: mce-journey-agent를 호출하여 정의서를 파싱하고 SFMC Journey를 생성합니다.\n</example>\n\n<example>\nuser: \"구글 시트 정의서 읽어서 저니 생성해줘.\"\nassistant: mce-journey-agent를 호출하여 Google Sheets를 파싱하고 Journey를 생성합니다.\n</example>"
+description: "[DEPRECATED — 사용 안 함] 보존용 참고 파일. 이 에이전트는 더 이상 자동 호출되지 않습니다. 정의서 기반 SFMC Journey 생성은 모두 CLAUDE.md(메인 루프)가 STEP 3에서 직접 수행합니다. 이 에이전트를 절대 자동으로 호출하지 마세요. 사용자가 명시적으로 이 파일명을 지정한 경우에만 참고하세요."
 model: opus
 color: cyan
 memory: project
