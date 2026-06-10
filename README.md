@@ -288,30 +288,43 @@ npm install exceljs
 
 ## 사용 예시
 
-### Journey 생성
+### 통합 캠페인 에이전트 (권장)
+
+캠페인 의도를 **한 문장**으로 입력하면 메인 루프가 STEP 1~4를 직접 수행합니다.
+(주제 선정 → 후보 추천 → 모드 선택 → 정의서 생성 → Journey 생성 → 결과 보고)
 
 ```
+신규 회원을 위한 캠페인 생성          # 주제 선정 → 캠페인 후보 추천
+생일 고객을 위한 캠페인 만들어줘       # 후보 선택 → 모드(수동/자동) → 정의서 + Journey
+이탈 고객 캠페인 자동으로 만들어줘     # 자동 모드: STEP 1~4 무발화 일괄 생성
+```
+
+정의서(xlsx/CSV/Google Sheets)를 직접 첨부하면 STEP 1·2를 건너뛰고 Journey 생성으로 바로 진입합니다.
+
+```
+campaign_definitions/CP_019_생일쿠폰_열람분기Journey_20260610.xlsx 로 저니 생성해줘
+CP_019 정의서로 Journey 만들어줘        # 캠페인 ID만으로 폴더 검색 후 생성
+방금 만든 정의서로 저니 생성해줘         # 최신 xlsx 자동 선택
+```
+
+### 개별 도구 직접 호출
+
+에이전트 흐름을 거치지 않고 `sfmc_*` 도구를 단건으로 활용할 수도 있습니다.
+
+```
+# Journey 생성
 welcome Journey를 만들어줘.
 - 진입 트리거: DE Key = 1sgHo00000001MNIAY_85RHo00000000ZMMAY_I
 - 액티비티: 이메일 → Wait 2일 → Engagement Split (오픈 여부)
 - 재진입: 불가
-```
 
-### Data Extension 조회
-
-```
+# Data Extension 조회
 최근 생성된 Data Extension 1개만 찾아줘
-```
 
-### Journey 수정
-
-```
+# Journey 수정
 welcome Journey의 Wait를 1일로 수정해줘
-```
 
-### SQL Query 실행
-
-```
+# SQL Query 실행
 All_Customer DE에서 오늘 가입한 회원만 조회하는 SQL Query를 실행해줘
 ```
 
@@ -363,9 +376,7 @@ mce-package-main/
 ├── campaign_definitions/              # 생성된 정의서 보관
 └── .claude/
     ├── settings.json                  # MCP 권한 설정
-    ├── agent-memory/
-    │   └── mce-journey-agent/
-    │       └── journey_history.md     # 저니 생성 이력 누적 기록
+    ├── journey_history.md             # 저니 생성 이력 누적 기록
     └── agents/                        # (보존용 — 현재 흐름에서는 사용 안 함)
         ├── mce-topic-agent.md         # 구 ① 주제 선정 (롤백/참고용)
         ├── mce-planning-agent.md      # 구 ② 기획 / 정의서 생성 (롤백/참고용)
