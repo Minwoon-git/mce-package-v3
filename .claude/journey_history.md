@@ -297,3 +297,21 @@
 - Journey 명: 등급별 윈백 열람반응 Journey
 - Journey ID: 75620314-427f-44e4-84dc-ddd98eb020d5
 - 상태: 성공 (Draft / 미발행, Recurring 매일 09:00 스케줄)
+
+---
+
+## 2026-06-11 — CP_021 친구추가·쿠폰 통합 리워드
+
+- Journey ID: `e406237e-e4e2-4bec-92cd-1c3879069563`
+- Journey Key: `CP021-CouponFriend-Journey-20260611`
+- Journey Name: `친구추가 쿠폰 통합 리워드 캠페인`
+- 상태: Draft (미발행)
+- 실행 모드: 수동 (바로 저니 생성)
+- Event Definition Key: `CP021-CouponFriend-Entry-20260611`
+- Event Definition ID: `a95f3033-0a94-42ba-8d53-eadb94f5bee4`
+- Automation ID: `77773f63-9cf8-48cf-8eac-d7e939a56b80` (매일 09:00 Recurring, 시작 2026-06-15)
+- Entry DE: 쿠폰_친구추가 / COUPON_FRIEND_ENTRY_DE (`6d3b987f-a064-f111-a5e1-5cba2c19fe48`)
+- 재진입: SingleEntryAcrossAllVersions
+- 구조: Decision Split(FriendInviteCount>=3) → Email → [소수경로] Wait 2D → Engagement Split(open) → Decision Split(IsCouponUsed=False) → 리마인드/재발송
+- 정의서: campaign_definitions/CP_021_친구추가쿠폰통합리워드_20260611.xlsx
+- 상태: 성공

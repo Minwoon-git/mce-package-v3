@@ -602,6 +602,7 @@ Journey     : 성공 — Journey ID: <uuid> (Draft / 발행됨)
 |---|---|---|
 | STEP 2 — 정의서 xlsx 생성 | `Error: Cannot find module 'exceljs'` — 스크립트 실행 실패 | 정의서 생성 전 `exceljs` 설치 여부 확인. 미설치 시 프로젝트 루트에서 `npm install exceljs` 1회 실행 후 `generate_campaign_definition.js` 재실행. |
 | STEP 3 — Journey 생성 | `sfmc_create_journey_builder_journey`에 full `body_json`을 넘기면 `entry_mode` 파라미터가 무시되어 `entryMode`가 `NotSet`으로 생성됨 (재진입 미설정 상태) | `body_json` **최상위에 `"entryMode"` 키를 직접 명시**한다 (`OnceAndDone` / `SingleEntryAcrossAllVersions` / `MultipleEntries`). 누락되어 `NotSet`으로 생성된 경우 생성 직후 `sfmc_update_journey`로 `entryMode`만 교정 PUT (key·version·modifiedDate·모든 activity outcomes 보존). |
+| STEP 3 — Decision Split 생성 | `sfmc_decision_split_activity` 헬퍼는 outcome key를 라벨에서 영숫자만 뽑아 만드는데, **한글 라벨은 전부 `out------`(대시)로 변환되어 두 분기 key가 충돌** → criteria 맵에서 하나만 살아남고 한 분기가 통째로 누락됨 (예: "다수 초대"/"소수 초대" 둘 다 `out------`). | Decision Split 분기 라벨이 한글이거나 영숫자가 없으면 헬퍼 출력을 그대로 쓰지 말 것. **outcome key를 `out-many`/`out-few`/`out-unused` 등 고유 영문 key로 직접 지정**하고, criteria 맵 key도 동일하게 맞추며 모든 분기의 FilterDefinition이 빠짐없이 들어갔는지 확인한다. (Python 빌더로 body를 조립해 JSON·XML 이스케이프 오류를 방지하는 방식 권장.) |
 
 ---
 
