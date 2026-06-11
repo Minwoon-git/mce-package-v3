@@ -291,3 +291,9 @@
 - Journey 명: 생일쿠폰_열람분기Journey
 - Journey ID: da0c4a55-06fd-4b1e-8d41-8bd90f6a9c9c
 - 상태: 성공 (Draft / 미발행)
+
+## 2026-06-11 (auto)
+- 캠페인 ID: CP_020
+- Journey 명: 등급별 윈백 열람반응 Journey
+- Journey ID: 75620314-427f-44e4-84dc-ddd98eb020d5
+- 상태: 성공 (Draft / 미발행, Recurring 매일 09:00 스케줄)

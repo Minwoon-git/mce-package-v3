@@ -23,7 +23,16 @@
       "Bash(git ls-tree *)",
       "Bash(git reset *)",
       "Bash(git branch *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m 'Add CP_017~019 campaign definitions and relocate journey history *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'Align README usage examples with unified agent flow *)",
+      "Bash(ls \"$HOME/.claude.json\" \"$HOME/.claude/settings.json\" \".mcp.json\" \".claude/settings.json\" \".claude/settings.local.json\" 2>/dev/null)",
+      "PowerShell(node \"C:\\\\Users\\\\MILVUS\\\\Desktop\\\\mce-packege-v2-main\\\\generate_campaign_definition.js\" CP_020_��޺����鿭������Journey_20260611.xlsx campaign_data.json)",
+      "Bash(cat >> *)",
+      "mcp__sf-mce-mcp__sfmc_search_attributes",
+      "Bash(git -C \"C:\\\\Users\\\\MILVUS\\\\Desktop\\\\mce-packege-v2-main\" status)",
+      "Bash(git -C \"C:\\\\Users\\\\MILVUS\\\\Desktop\\\\mce-packege-v2-main\" diff --stat)"
     ]
   }
 }
