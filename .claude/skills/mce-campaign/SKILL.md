@@ -91,11 +91,12 @@ description: >
 >
 > ⚠️ **STEP 1-5 캠페인 후보 선택은 예외 — 클릭형이 아니라 기존 텍스트(번호/`추천`) 입력 방식을 유지한다.**
 
-적용 지점은 3곳이며, 각 STEP의 해당 위치에 표시돼 있다:
+적용 지점은 4곳이며, 각 STEP의 해당 위치에 표시돼 있다:
 
 | 지점 | 질문(header) | 클릭 옵션 |
 |---|---|---|
 | STEP 2 실행 모드 | `실행 모드` | `수동` / `자동` |
+| STEP 2 스케줄 모드 | `스케줄` | `Recurring (반복 발송)` / `On Activation (발행 시 1회)` (Recurring 선택 시 주기·시작일·시각은 텍스트로 이어서 확정) |
 | STEP 2 수동 진행 방식 | `진행 방식` | `정의서 후 승인` / `바로 저니 생성` |
 | STEP 2 Plan 승인 | `Plan 승인` | `승인 (저니 생성)` / `수정할게요` |
 
@@ -233,10 +234,14 @@ DE에 필요한 분기 필드가 없으면, 그 사실을 명시하고(예: "IsC
 
 - **수동** → 직접 대화로 Plan을 합의한다. 아래 항목을 순서대로 사용자와 정한다:
   1. Entry Source (Data Extension / API Event) 및 진입 DE
-  2. 발송 일정 / 스케줄 시작일 / Schedule Flow Mode (Recurring vs On Activation)
+  2. **스케줄** — 발송 일정 / 스케줄 시작일 / Schedule Flow Mode (Recurring vs On Activation)
+     → 🔘 `AskUserQuestion`(header `스케줄`)으로 **`Recurring (반복 발송)` / `On Activation (발행 시 1회)`** 을 먼저 받는다.
+       `Recurring`이면 이어서 **주기(매일/매주/매월)·시작일·발송 시각**을 대화로 확정한다(날짜·시각은 텍스트 입력).
   3. 재진입 설정 (No re-entry / Re-entry anytime / Re-entry only after exiting)
   4. Journey 단계 구성 (Email / Wait / Decision Split / Engagement Split / Wait & Exit ...)
   5. 각 단계의 상세값 (이메일명·ID, 대기 기간, 분기 조건/기준 속성)
+
+  > ⚠️ **스케줄을 자동 기본값으로 조용히 넘기지 않는다.** 수동 모드에서는 스케줄(발송 일정·시작일·Schedule Flow Mode)을 **반드시 사용자와 확정**하고, Plan 요약(2-1)의 `스케줄` 라인을 항상 실제 값으로 채워 보여준다. 사용자가 스케줄을 언급하지 않았더라도 추천값을 제시해 **확인을 받는다**(애매한 항목만 묻는 사전 확인 체크리스트를 쓸 때도 스케줄을 반드시 포함).
 
   합의가 끝나면 확정된 Plan을 요약해 보여준 뒤, **진행 방식을 한 번 묻는다** (🔘 `AskUserQuestion`, header `진행 방식`):
   - ① **정의서 생성 후 승인** — xlsx 정의서를 먼저 생성해 보여주고, 사용자 승인을 받은 뒤 STEP 3 Journey 생성
