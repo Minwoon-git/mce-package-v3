@@ -327,3 +327,15 @@
 - Journey 명: 신규회원 동의별 웰컴 쿠폰 시리즈
 - Journey ID: 49ea2c7f-c027-4c51-bd6c-dffae6bf95ab
 - 상태: 성공 (Draft / 미발행)
+
+## 2026-06-11 02:10
+- 캠페인 ID: CP_024
+- Journey 명: 등급별 생일 쿠폰 사용 유도
+- Journey ID: d2c157cd-1906-4cd8-948f-42d8e511ab0f
+- 상태: 성공 (Draft / 미발행)
+
+## 2026-06-11 02:22
+- 캠페인 ID: CP_025
+- Journey 명: 구매전환체크리마인드
+- Journey ID: f6dd904b-a6e4-4ee0-b6cd-a0b90545f2fb
+- 상태: 성공 (Draft / 미발행)
