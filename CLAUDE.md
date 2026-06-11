@@ -20,8 +20,18 @@
 
 ## 경로
 
-- **프로젝트 루트**: `C:\Users\MILVUS\Desktop\mce-packege-v2-main`
-- **정의서 폴더**: `C:\Users\MILVUS\Desktop\mce-packege-v2-main\campaign_definitions`
+> ⚠️ **경로 자동 적용 규칙 (다른 PC에서 실행 시 필수)**
+> 아래 절대경로는 **작성 당시 PC 기준 예시**다. 사용자명·드라이브·폴더 위치는 PC마다 다르므로 **이 문자열을 그대로 쓰지 말 것.**
+> **항상 현재 작업 디렉토리(cwd = 이 저장소가 clone된 위치)를 "프로젝트 루트"로 삼고, 모든 경로를 그 기준으로 도출**한다.
+> - 프로젝트 루트 = 현재 cwd (환경 정보의 working directory)
+> - 정의서 폴더 = `<프로젝트 루트>\campaign_definitions`
+> - 정의서 생성 스크립트 = `<프로젝트 루트>\generate_campaign_definition.js`
+>
+> 아래 `C:\Users\MILVUS\Desktop\mce-packege-v2-main` 가 나오는 모든 곳(STEP 2·3의 xlsx 생성/파싱 절대경로 포함)은 **실제 현재 프로젝트 루트로 치환하여 사용**한다.
+> cwd가 아래 예시 경로와 다르면 **무조건 cwd를 우선**한다. (별도 설치/치환 스크립트 불필요 — 런타임에 알아서 적용)
+
+- **프로젝트 루트**: `C:\Users\MILVUS\Desktop\mce-packege-v2-main` *(예시 — 실제로는 현재 cwd 사용)*
+- **정의서 폴더**: `C:\Users\MILVUS\Desktop\mce-packege-v2-main\campaign_definitions` *(예시)*
 - **정의서 생성 스크립트**: `generate_campaign_definition.js` (`__dirname` 기준 자동 처리)
 
 ---
