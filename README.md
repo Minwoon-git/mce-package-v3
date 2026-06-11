@@ -55,15 +55,24 @@ Marketing Cloud에서 API 연동용 패키지를 생성합니다.
 | Push | Read, Write, Send |
 
 8. 저장 후 생성된 **Client ID**, **Client Secret**, **MID(Account ID)** 확인
-9. 인증 URL(`https://xxxxxxxxx.auth.marketingcloudapis.com`)에서 **32자리 Subdomain** 확인
+9. 인증 URL(`https://xxxxxxxxx.auth.marketingcloudapis.com`)에서 **28자리 Subdomain** 확인
+
+> 위에서 확보한 **Client ID / Client Secret / MID / Subdomain**은 Salesforce가 호스팅하는 원격 MCP 서버를 발급받을 때 사용됩니다.
+> 이 값들로 테넌트별 MCP 엔드포인트 URL(아래 2단계의 `https://...sfdcfc.net/t/<테넌트ID>/c/<세션토큰>/api/mcp`)이 생성되며, 인증은 이 URL에 포함된 세션 토큰으로 처리됩니다.
+> (로컬에 Client ID/Secret를 직접 입력하는 과정은 없으며, 발급받은 URL을 2단계에서 등록합니다.)
 
 ---
 
 ### 2단계: Claude Code에 MCP 서버 연결
 
+1단계에서 발급받은 **원격 MCP 엔드포인트 URL**을 HTTP transport로 등록합니다.
+
 ```bash
-claude mcp add sf-mce-mcp
+claude mcp add --transport http sf-mce-mcp "https://mai-mce-mcp-cdp1.sfdc-yfeipo.svc.sfdcfc.net/t/<테넌트ID>/c/<세션토큰>/api/mcp"
 ```
+
+> ⚠️ 이 서버는 **원격 HTTP MCP 서버**이므로 `--transport http`와 URL을 반드시 지정해야 합니다.
+> `claude mcp add sf-mce-mcp`처럼 이름만 주면 로컬(stdio) 서버로 처리되어 연결되지 않습니다.
 
 연결 확인:
 
