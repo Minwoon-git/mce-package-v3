@@ -29,6 +29,30 @@ https://mai-mce-mcp-cdp1.sfdc-yfeipo.svc.sfdcfc.net/t/<테넌트ID>/c/<세션토
 
 ---
 
+## 다른 PC에서 가져와 사용하기 (빠른 시작)
+
+이 저장소를 새 PC로 옮길 때는 아래 3단계면 됩니다. (경로 수정·치환 작업은 필요 없습니다.)
+
+```bash
+# 1) 저장소 가져오기 — clone 위치/폴더명은 자유
+git clone <레포 URL>
+cd <클론한 폴더>
+
+# 2) 의존성 설치 — node_modules 는 깃에 없으므로 반드시 실행
+npm install
+
+# 3) 원격 MCP 서버 연결 (토큰은 PC/계정마다 다름 → 직접 등록)
+claude mcp add --transport http sf-mce-mcp "<발급받은 엔드포인트 URL>"
+```
+
+- **사전 요구사항**: 새 PC에 **Node.js**와 **Claude Code CLI**가 설치돼 있어야 합니다. (xlsx 파싱에 Python을 쓰는 경우 Python도 권장)
+- **경로 자동 적용**: `CLAUDE.md`의 절대경로 예시(`C:\Users\...\mce-packege-v2-main`)는 **작성 당시 PC 기준 예시**일 뿐입니다. Claude Code가 실행 시 **현재 작업 디렉토리(cwd)를 프로젝트 루트로 삼아 모든 경로를 자동 적용**하므로, clone 위치가 달라도 그대로 동작합니다. (별도 설치/치환 스크립트 불필요)
+- **로컬 권한 파일**: `.claude/settings.local.json`은 PC마다 다른 **로컬 전용 권한 파일**이라 깃 추적에서 제외돼 있습니다. 새 PC에서는 자동 생성되며, 도구 사용을 승인하면서 권한이 다시 누적됩니다. (공유 권한은 추적되는 `.claude/settings.json`에 있음)
+
+> 발급받을 엔드포인트 URL을 모른다면 아래 **설치 및 연결** 1단계(Installed Package)부터 진행해 테넌트별 URL을 발급받으세요.
+
+---
+
 ## 설치 및 연결
 
 ### 1단계: Marketing Cloud Installed Package 설정
