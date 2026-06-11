@@ -603,6 +603,40 @@ Journey     : 성공 — Journey ID: <uuid> (Draft / 발행됨)
 | STEP 2 — 정의서 xlsx 생성 | `Error: Cannot find module 'exceljs'` — 스크립트 실행 실패 | 정의서 생성 전 `exceljs` 설치 여부 확인. 미설치 시 프로젝트 루트에서 `npm install exceljs` 1회 실행 후 `generate_campaign_definition.js` 재실행. |
 | STEP 3 — Journey 생성 | `sfmc_create_journey_builder_journey`에 full `body_json`을 넘기면 `entry_mode` 파라미터가 무시되어 `entryMode`가 `NotSet`으로 생성됨 (재진입 미설정 상태) | `body_json` **최상위에 `"entryMode"` 키를 직접 명시**한다 (`OnceAndDone` / `SingleEntryAcrossAllVersions` / `MultipleEntries`). 누락되어 `NotSet`으로 생성된 경우 생성 직후 `sfmc_update_journey`로 `entryMode`만 교정 PUT (key·version·modifiedDate·모든 activity outcomes 보존). |
 | STEP 3 — Decision Split 생성 | `sfmc_decision_split_activity` 헬퍼는 outcome key를 라벨에서 영숫자만 뽑아 만드는데, **한글 라벨은 전부 `out------`(대시)로 변환되어 두 분기 key가 충돌** → criteria 맵에서 하나만 살아남고 한 분기가 통째로 누락됨 (예: "다수 초대"/"소수 초대" 둘 다 `out------`). | Decision Split 분기 라벨이 한글이거나 영숫자가 없으면 헬퍼 출력을 그대로 쓰지 말 것. **outcome key를 `out-many`/`out-few`/`out-unused` 등 고유 영문 key로 직접 지정**하고, criteria 맵 key도 동일하게 맞추며 모든 분기의 FilterDefinition이 빠짐없이 들어갔는지 확인한다. (Python 빌더로 body를 조립해 JSON·XML 이스케이프 오류를 방지하는 방식 권장.) |
+| STEP 3 — 이메일 발송/저니 검증 | 저니 이메일 액티비티에서 `The email ... did not pass validation. ... missing a valid physical mailing address (CAN-SPAM)` 오류. 계정 물리적 주소(Setup→Account Settings→Company Information)가 채워져 있어도 발생. 원인은 **HTML Paste(`kind=paste`) 이메일 본문에 ① 물리적 주소 머지태그뿐 아니라 ② 수신거부 링크 `%%unsub_center_url%%`까지 둘 다 있어야** 검증을 통과하는데 둘 중 하나라도 빠진 것. (Template-Based 이메일은 footer에 3요소가 내장돼 통과됨.) | HTML Paste 임시 이메일을 만들 땐 footer에 **물리적 주소 `%%Member_Busname%% %%Member_Addr%% %%Member_City%%, %%Member_State%%, %%Member_PostalCode%%, %%Member_Country%%` + 프로필 센터 `%%profile_center_url%%` + 수신거부 `%%unsub_center_url%%`** 3요소를 처음부터 모두 넣는다. ⚠️ REST API(`sfmc_update_content_builder_asset`)로 `content`만 PATCH하면 **검증 플래그가 갱신되지 않으므로** 수정 후 Content Builder에서 한 번 **Save**해야 재검증된다. 빠르게 통과시키려면 검증된 Template-Based 이메일로 액티비티 emailId를 교체하는 방법도 있다. |
+| STEP 3 — Engagement Split 기준(metric) `statsTypeId` 매핑 | `sfmc_engagement_decision_activity` 헬퍼가 알려주는 매핑(1=오픈/2=클릭/3=특정링크/4=미열람)은 **틀림**. 실제 Journey Builder UI 검증 결과 `statsTypeId` `1`과 `4`는 UI에 대응 옵션이 없어 metric이 **`undefined`(미선택)** 로 표시됨. | **실측 확정 매핑(JB UI에서 직접 검증): `2`=Opens(열람), `3`=Clicks(클릭)만 유효. `1`·`4`는 무효(undefined). 바운스는 이 액티비티의 statsTypeId로는 설정 불가(연속 번호 아님) — 바운스 기준이 필요하면 UI에서 직접 선택.** Engagement Split을 API로 만들 땐 `configurationArguments.statsTypeId`를 **반드시 2(오픈) 또는 3(클릭)** 으로 지정한다(헬퍼 기본값 1을 그대로 쓰면 UI에서 undefined가 됨). `engagementUrls.urls`는 빈 배열로 두면 됨(특정 링크 클릭일 때만 URL 채움). 값 교정은 `sfmc_update_journey`로 `statsTypeId`만 PUT(전체 activity id/key/outcomes·entryMode·modifiedDate 보존; 저니가 UI에서 자동 재저장되어 락이 걸리면 직전 GET의 최신 modifiedDate로 재시도). Engagement Split은 오픈·클릭·바운스 중 1개만 선택 가능. |
+
+---
+
+## 이메일 콘텐츠 생성 표준 (고퀄리티 기본값)
+
+> 이메일 콘텐츠(에셋)를 새로 만들 때는 **항상 아래 "고퀄리티 + born-compliant" 방식**으로 생성한다.
+> 빈 본문/단순 텍스트 이메일을 만든 뒤 나중에 footer만 붙이는 방식은 **금지** — SFMC 검증 플래그가 갱신되지 않아 CAN-SPAM "물리적 주소 없음" 오류가 계속 남는다.
+
+**필수 구성 (모든 발송용 이메일):**
+1. 반응형 `<table>` 레이아웃 (600px + 인라인 CSS + `@media max-width:620px` 모바일 대응)
+2. 브랜드 헤더(로고/브랜드명) + 히어로(헤드라인) + 본문(가치 제안 1개) + 오퍼/혜택 섹션
+3. Bulletproof CTA (table + `bgcolor` 기반 버튼 — Outlook 호환)
+4. Preheader (받은편지함 미리보기 문구, 숨김 `<div>`)
+5. 규정 푸터 3요소: 물리적 주소(`%%Member_Busname%% %%Member_Addr%% %%Member_City%%, %%Member_State%%, %%Member_PostalCode%%, %%Member_Country%%`) + 프로필센터(`%%profile_center_url%%`) + 수신거부(`%%unsub_center_url%%`)
+6. **안전한 개인화** — `%%FirstName%%` 단독 사용 금지(진입 DE에 없으면 personalization 검증 오류). AMPscript fallback 사용:
+   `%%[ VAR @name SET @name = AttributeValue("FirstName") IF EMPTY(@name) THEN SET @name = "고객" ENDIF ]%%` → 본문에서 `%%=v(@name)=%%님`
+
+**생성 방법:** `sfmc_create_email`로 완성된 HTML을 한 번에 생성한다(born-compliant → 생성 시점에 검증 통과, HTML+자동 text 뷰 포함). 타입(htmlemail/paste/template)은 무관 — 위 요소만 갖추면 통과한다. 캠페인 성격(신규/이탈/장바구니/생일/쿠폰)에 맞춰 헤드라인·오퍼·악센트 컬러·CTA만 바꾼다.
+
+**전용 폴더 — `MCE-Package` (Content Builder categoryId `93427`):**
+- 캠페인 발송용 이메일은 모두 이 폴더에 둔다. **새 이메일 생성 시 `category_id: 93427`로 생성**하고, 저니 생성(STEP 3)에서 이메일을 찾을 때는 **이 폴더 + 이름으로 우선 조회**한다(루트의 옛 임시 이메일과 혼동 방지 — 비슷한 이름 오선택이 과거 오류의 원인이었음).
+- 하위폴더는 두지 않는다(캠페인당 이메일 1개, 이름으로 식별 충분).
+
+**캠페인별 기준 샘플 이메일 (MCE-Package / 93427):**
+
+| 캠페인 (진입 DE) | 이메일명 | emailId |
+|---|---|---|
+| 신규회원 (New Join) | 신규회원 웰컴 이메일 (샘플) | `64096` |
+| 이탈고객 (Old Member) | 이탈고객 재활성화 이메일 (샘플) | `64097` |
+| 장바구니 (Cart) | 장바구니 이탈 리마인더 이메일 (샘플) | `64098` |
+| 생일 (Birthday) | 생일 축하 쿠폰 이메일 (샘플) | `64099` |
+| 쿠폰/친구추가 (Coupon) | 쿠폰 친구추가 이메일 (샘플) | `64100` |
 
 ---
 

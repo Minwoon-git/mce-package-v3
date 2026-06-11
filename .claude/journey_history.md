@@ -315,3 +315,15 @@
 - 구조: Decision Split(FriendInviteCount>=3) → Email → [소수경로] Wait 2D → Engagement Split(open) → Decision Split(IsCouponUsed=False) → 리마인드/재발송
 - 정의서: campaign_definitions/CP_021_친구추가쿠폰통합리워드_20260611.xlsx
 - 상태: 성공
+
+## 2026-06-11 (자동)
+- 캠페인 ID: CP_022
+- Journey 명: 신규회원 웰컴-쿠폰 안내 시리즈
+- Journey ID: 2d994ade-e387-4737-b844-41e9563d6067
+- 상태: 성공 (Draft / 미발행)
+
+## 2026-06-11 00:31
+- 캠페인 ID: CP_023
+- Journey 명: 신규회원 동의별 웰컴 쿠폰 시리즈
+- Journey ID: 49ea2c7f-c027-4c51-bd6c-dffae6bf95ab
+- 상태: 성공 (Draft / 미발행)

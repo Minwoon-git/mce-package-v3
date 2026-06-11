@@ -32,7 +32,22 @@
       "Bash(cat >> *)",
       "mcp__sf-mce-mcp__sfmc_search_attributes",
       "Bash(git -C \"C:\\\\Users\\\\MILVUS\\\\Desktop\\\\mce-packege-v2-main\" status)",
-      "Bash(git -C \"C:\\\\Users\\\\MILVUS\\\\Desktop\\\\mce-packege-v2-main\" diff --stat)"
+      "Bash(git -C \"C:\\\\Users\\\\MILVUS\\\\Desktop\\\\mce-packege-v2-main\" diff --stat)",
+      "Bash(git commit -m ' *)",
+      "PowerShell(node generate_campaign_definition.js CP_021_ģ���߰��������ո�����_20260611.xlsx campaign_data.json)",
+      "Bash(ls -la .mcp.json .claude/settings.json .claude/settings.local.json)",
+      "Bash(cat .mcp.json)",
+      "Bash(node -e \"const fs=require\\('fs'\\);const p=require\\('os'\\).homedir\\(\\)+'/.claude.json';try{const j=JSON.parse\\(fs.readFileSync\\(p,'utf8'\\)\\);function find\\(o\\){let r=[];if\\(o&&typeof o==='object'\\){if\\(o['sf-mce-mcp']\\)r.push\\(o['sf-mce-mcp']\\);for\\(const k in o\\){if\\(typeof o[k]==='object'\\)r=r.concat\\(find\\(o[k]\\)\\);}}return r;}const f=find\\(j\\);console.log\\(JSON.stringify\\(f.slice\\(0,3\\),null,2\\)\\);}catch\\(e\\){console.log\\('ERR',e.message\\);}\")",
+      "Bash(python3 -c ' *)",
+      "Bash(node generate_campaign_definition.js CP_022_신규회원웰컴쿠폰안내시리즈_20260611.xlsx campaign_data.json)",
+      "mcp__sf-mce-mcp__sfmc_update_content_builder_asset",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "mcp__sf-mce-mcp__sfmc_get_content_categories",
+      "Bash(node generate_campaign_definition.js \"CP_023_신규회원동의별웰컴쿠폰시리즈_20260611.xlsx\" campaign_data.json)",
+      "WebSearch",
+      "WebFetch(domain:developer.salesforce.com)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
