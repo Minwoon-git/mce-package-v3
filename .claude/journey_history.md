@@ -339,3 +339,15 @@
 - Journey 명: 구매전환체크리마인드
 - Journey ID: f6dd904b-a6e4-4ee0-b6cd-a0b90545f2fb
 - 상태: 성공 (Draft / 미발행)
+
+## 2026-06-12 09:00
+- 캠페인 ID: CP_026
+- Journey 명: 신규회원 동의별 웰컴 온보딩
+- Journey ID: 97fa9f77-83c3-4253-b5b7-32b722b2b431
+- 상태: 성공 (Draft / 미발행)
+
+## 2026-06-15
+- 캠페인 ID: CP_027
+- Journey 명: 신규회원 웰컴 알림톡
+- Journey ID: a29bba31-81b9-48d6-99c0-705edb0854fa
+- 상태: 성공 (Draft / 미발행)

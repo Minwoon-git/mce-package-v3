@@ -143,8 +143,59 @@ Decision Split(`MULTICRITERIADECISION`)은 `configurationArguments.criteria`에 
 - Email → `EMAILV2` / `configurationArguments.triggeredSend`에 emailId, emailSubject, sendClassificationId, senderProfileId, deliveryProfileId, publicationListId 모두 포함, `isMultipart: true`, `isTrackingClicks: true`
 - Wait → `WAIT` / `configurationArguments`: `waitDuration`, `waitUnit: "DAYS"`
 - Engagement Split → `sfmc_engagement_decision_activity` 도구 사용 (열람/미열람 기준)
+- REST 커스텀 액티비티 → `REST` (아래 ④ 참조)
 
 모든 액티비티에 `metaData.isConfigured: true` 를 명시한다.
+
+### ④ REST 커스텀 액티비티 (알림톡 / 문자 / 카카오 / SMS)
+
+> ⚠️ **사용 조건 (트리거):** 캠페인/정의서에 **`알림톡`, `문자`, `카카오`, `SMS`** 중 하나라도 메시지 채널 문구로 등장하면, 이메일 액티비티(`EMAILV2`) 대신 **REST 커스텀 액티비티(`type: "REST"`)** 를 사용한다.
+> 이 채널들은 SFMC 기본 이메일 발송이 아니라 외부 발송 서비스(micrm)를 호출하므로, Journey Builder에 설치된 커스텀 액티비티 패키지를 액티비티로 넣어 처리한다.
+>
+> ⚠️ **REST 액티비티 단독 처리:** 위 채널 캠페인에서는 **이메일 에셋·이메일 액티비티(`EMAILV2`)를 생성하지 않는다.** 메시지 발송은 REST 커스텀 액티비티 하나로만 처리한다. 즉 `Message (Email)` 단계를 REST 액티비티로 **대체**하며, 이메일 에셋 생성 단계(STEP 3 이메일 표준)는 건너뛴다.
+
+REST 커스텀 액티비티는 `activities` 배열에 아래 형태의 객체를 추가하면 동작한다. 별도 도구 없이 `sfmc_create_journey_builder_journey`의 `body_json` 안에 다른 액티비티(Email/Wait/Decision)와 동일하게 포함한다.
+
+```jsonc
+{
+  "key": "REST-1",
+  "type": "REST",
+  "name": "",
+  "outcomes": [{ "key": "<next-outcome-key>", "metaData": { "invalid": false } }],
+  "arguments": {
+    "execute": {
+      "url": "https://sales.micrm.co.kr/sf/06/execute.service",
+      "useJwt": true, "retryCount": 5, "retryDelay": 10000, "timeout": 100000,
+      "inArguments": [{
+        "contactkey": "{{Event.<EventDefinitionKey>.contactkey}}",
+        "phone": "{{Event.<EventDefinitionKey>.phone}}",
+        "name": "{{Event.<EventDefinitionKey>.name}}",
+        "§extention_cnt§": 2,
+        "§data_extension_id§": "<진입 DE GUID>"
+      }]
+    }
+  },
+  "configurationArguments": {
+    "applicationExtensionKey": "ac710353-5af5-4d5a-a510-179c2c5e840d",
+    "save":      { "url": "https://sales.micrm.co.kr/sf/06/save.service" },
+    "validate":  { "url": "https://sales.micrm.co.kr/sf/06/validate.service" },
+    "publish":   { "url": "https://sales.micrm.co.kr/sf/06/publish.service" },
+    "stop":      { "url": "https://sales.micrm.co.kr/sf/06/stop.service" },
+    "unpublish": { "url": "https://sales.micrm.co.kr/sf/06/unpublish.service" },
+    "testSave":  { "url": "https://sales.micrm.co.kr/sf/06/TestSave.service" }
+  },
+  "metaData": { "isConfigured": true, "category": "message", "icon": "https://sales.micrm.co.kr/sf/06/icon.png", "original_icon": "icon.png" }
+}
+```
+
+핵심 규칙:
+- `type`은 반드시 **`REST`** (커스텀 액티비티). `category`는 `"message"`.
+- `applicationExtensionKey`는 **해당 SFMC 계정 Installed Packages에 등록된 커스텀 액티비티 패키지 키**를 가리킨다. 위 값(`ac71…840d`)은 작성 당시 계정 기준이며, 다른 계정에서는 그 계정의 키로 바꾼다.
+- `arguments.execute.url` 및 `configurationArguments`의 6개 엔드포인트(`save/validate/publish/stop/unpublish/testSave`)는 외부 발송 서비스(micrm) URL이다.
+- `inArguments`의 속성 바인딩 키(`{{Event.<EventDefinitionKey>.속성}}`)는 **진입 Event Definition Key와 정확히 일치**해야 한다.
+- `§extention_cnt§`, `§data_extension_id§`는 서버 측 치환 토큰이므로 그대로 둔다. `§data_extension_id§` 값에는 진입 DE의 GUID를 넣는다.
+- `metaData.isConfigured: true` 필수 (없으면 UI에서 "미설정" 상태로 표시됨).
+- 검증 출처: `0615_MCP_테스트` 저니(v1, Draft) — 위 구조로 정상 생성·설정 확인됨.
 
 ```
 sfmc_create_journey_builder_journey 실행
