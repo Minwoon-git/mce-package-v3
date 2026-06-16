@@ -452,13 +452,19 @@ STEP 2에서 생성된 정의서(또는 사용자가 직접 첨부한 정의서)
 
 모든 처리 완료 후 결과를 요약한다.
 
+Journey 생성에 성공하면 **`sfmc_get_journey_link` 를 호출해 Journey Builder 접속 URL을 얻어** 결과에 포함한다. (여러 저니를 만들었으면 저니마다 이름·ID·링크를 각각 표기한다.)
+
 ```
 [ 실행 결과 ]
 선택 캠페인 : <캠페인명>
 실행 모드   : 수동 / 자동
 정의서      : campaign_definitions/CP_XXX_시나리오명_YYYYMMDD.xlsx
-Journey     : 성공 — Journey ID: <uuid> (Draft / 발행됨)
+Journey 명  : <Journey 이름>
+Journey ID  : <uuid> (Draft / 발행됨)
+접속 링크   : <Journey Builder URL>
 ```
+
+> 링크는 가능한 한 클릭 가능한 형태로 제공한다. `sfmc_get_journey_link` 가 URL을 돌려주지 못하면 ID·이름까지만 표기하고 링크 줄은 생략한다.
 
 오류가 발생한 단계는 오류 내용을 명시하고, 가능한 경우 다음 단계로 계속 진행한다.
 

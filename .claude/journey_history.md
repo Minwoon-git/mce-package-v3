@@ -376,3 +376,21 @@
 - Journey 명: 멤버십 등급별 신규 온보딩
 - Journey ID: 157a6e41-ba2a-40dc-a965-ff719061e105
 - 상태: 성공 (Draft, 미발행)
+
+## 2026-06-16 11:05
+- 캠페인 ID: CP_032
+- Journey 명: 멤버십 신규회원 웰컴이메일
+- Journey ID: 9f017b13-cf35-468f-b970-a0bc3efef5d2
+- 상태: 성공 (Draft / 미발행)
+
+## 2026-06-16 11:17
+- 캠페인 ID: CP_033
+- Journey 명: 신규회원 환영 알림톡
+- Journey ID: 5fe779f0-3eec-4740-a4e7-045a454f0568
+- 상태: 성공 (Draft, 미발행)
+
+## 2026-06-16 11:28
+- 캠페인 ID: CP_034
+- Journey 명: 멤버십 신규회원 웰컴 이메일
+- Journey ID: da958a0a-367a-4e33-8bd6-e47e5c525d97
+- 상태: 성공 (Draft / 미발행)

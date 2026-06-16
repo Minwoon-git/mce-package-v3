@@ -108,9 +108,47 @@ function toSlackMrkdwn(md) {
   const cells = (l) =>
     l.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
 
+  const linkText = (l, journeyName) => {
+    const md = l.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/); // [텍스트](url)
+    if (md) return `🔗 <${md[2]}|${md[1]}>`;
+    const u = l.match(/https?:\/\/\S+/);
+    if (!u) return null;
+    const lbl = l.split(/[:：]/)[0].replace(/[*`]/g, '').trim(); // "접속 링크 : url" → "접속 링크"
+    return `🔗 <${u[0]}|${journeyName || lbl || '바로가기'}>`;
+  };
+
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
+
+    // 코드블록(```) 처리: 블록 안의 링크 줄은 밖으로 빼서 클릭 가능하게(저니명을 링크 텍스트로)
+    if (line.trim().startsWith('```')) {
+      const block = [];
+      i++;
+      while (i < lines.length && lines[i].trim() !== '```') {
+        block.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++; // 닫는 ``` 건너뜀
+      const nameLine = block.find((l) => /journey\s*명|저니\s*명|저니\s*이름|journey\s*name/i.test(l));
+      const journeyName = nameLine
+        ? nameLine.split(/[:：]/).slice(1).join(':').replace(/\*\*/g, '').trim()
+        : '';
+      const kept = block.filter((l) => !/https?:\/\//.test(l) && !/\]\(https?:\/\//.test(l));
+      const linkLines = block.filter((l) => /https?:\/\//.test(l) || /\]\(https?:\/\//.test(l));
+      if (kept.some((l) => l.trim())) {
+        out.push('```');
+        for (const l of kept) out.push(l);
+        out.push('```');
+      }
+      for (const l of linkLines) {
+        const t = linkText(l, journeyName);
+        if (t) out.push(t);
+      }
+      out.push('');
+      continue;
+    }
+
     if (isRow(line) && i + 1 < lines.length && isSep(lines[i + 1])) {
       const header = cells(line);
       i += 2; // 헤더 + 구분선 건너뜀
@@ -126,16 +164,39 @@ function toSlackMrkdwn(md) {
           i++;
         }
         if (rows.length) {
-          // 한글 등 전각 문자는 폭 2로 계산해 콜론 위치를 맞춘다
-          const w = (s) =>
-            [...s].reduce((a, ch) => a + (/[ᄀ-ᇿ⺀-꓏가-힣＀-￯]/.test(ch) ? 2 : 1), 0);
-          const maxW = Math.max(...rows.map((r) => w(r[0])));
-          out.push('```');
-          for (const [label, val] of rows) {
-            const pad = ' '.repeat(Math.max(0, maxW - w(label)));
-            out.push(val ? `${label}${pad} : ${val}` : label);
+          // URL/링크가 든 행은 코드블록 안에 두면 클릭이 안 되므로 따로 뺀다
+          const hasLink = (v) => /https?:\/\//.test(v) || /\]\(https?:\/\//.test(v);
+          const plain = rows.filter(([, v]) => !hasLink(v));
+          const links = rows.filter(([, v]) => hasLink(v));
+
+          if (plain.length) {
+            // 한글 등 전각 문자는 폭 2로 계산해 콜론 위치를 맞춘다
+            const w = (s) =>
+              [...s].reduce((a, ch) => a + (/[ᄀ-ᇿ⺀-꓏가-힣＀-￯]/.test(ch) ? 2 : 1), 0);
+            const maxW = Math.max(...plain.map((r) => w(r[0])));
+            out.push('```');
+            for (const [label, val] of plain) {
+              const pad = ' '.repeat(Math.max(0, maxW - w(label)));
+              out.push(val ? `${label}${pad} : ${val}` : label);
+            }
+            out.push('```');
           }
-          out.push('```');
+          // 링크 행은 코드블록 밖에 — 긴 URL 대신 "저니명"을 링크 텍스트로 (<url|텍스트>)
+          const nameRow = rows.find(([l]) => /journey\s*명|저니\s*명|저니\s*이름|journey\s*name/i.test(l));
+          const journeyName = nameRow ? nameRow[1].replace(/\*\*/g, '').trim() : '';
+          for (const [label, val] of links) {
+            const md = val.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/); // [텍스트](url)
+            let url, text;
+            if (md) {
+              text = md[1];
+              url = md[2];
+            } else {
+              const u = val.match(/https?:\/\/\S+/);
+              url = u ? u[0] : val;
+              text = journeyName || label || '바로가기'; // 저니명 우선, 없으면 라벨
+            }
+            out.push(`🔗 <${url}|${text}>`);
+          }
           out.push('');
         }
         continue;
@@ -163,6 +224,7 @@ function toSlackMrkdwn(md) {
   }
 
   let s = out.join('\n');
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<$2|$1>'); // [텍스트](url) → Slack 링크
   s = s.replace(/\*\*(.+?)\*\*/g, '*$1*').replace(/__(.+?)__/g, '*$1*'); // **굵게** → *굵게*
   s = s.replace(/^#{1,6}\s*(.+)$/gm, '*$1*'); // ### 헤딩 → *헤딩*
   s = s.replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/gm, '──────────────────────────────'); // 가로 구분선
