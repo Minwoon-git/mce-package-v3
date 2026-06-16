@@ -8,15 +8,52 @@ require('dotenv').config();
 const { App, Assistant } = require('@slack/bolt');
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 // 프로젝트 루트 = 이 파일의 상위 폴더 (mce-campaign 스킬·sf-mce-mcp가 연결된 곳)
 const PROJECT_ROOT = path.resolve(__dirname, '..');
+
+// 상태 영속화 파일 — 브릿지를 재시작/재연결해도 대화 연속성(--resume)과 인사 여부를 유지한다.
+//   (메모리에만 두면 재시작 시 맥락이 날아가 "처음으로 돌아가고", 인사말이 다시 뜬다.)
+const STATE_FILE = path.join(__dirname, '.bridge-state.json');
 
 // 대화 스레드 → Claude Code session_id 매핑. 같은 스레드면 --resume 로 맥락을 이어간다.
 const sessions = new Map();
 
 // 대화 스레드 → 누적 사용량 { cost, turns }. "사용량" 으로 조회한다.
 const usage = new Map();
+
+// 이미 인사한 스레드 키 집합 — 재연결/재시작 때 재전송되는 thread_started 로 인사말이 중복되는 것을 막는다.
+const greeted = new Set();
+
+function loadState() {
+  try {
+    const s = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    for (const [k, v] of Object.entries(s.sessions || {})) sessions.set(k, v);
+    for (const [k, v] of Object.entries(s.usage || {})) usage.set(k, v);
+    for (const k of s.greeted || []) greeted.add(k);
+  } catch {
+    /* 최초 실행이면 파일이 없다 — 무시 */
+  }
+}
+
+function saveState() {
+  try {
+    fs.writeFileSync(
+      STATE_FILE,
+      JSON.stringify({
+        sessions: Object.fromEntries(sessions),
+        usage: Object.fromEntries(usage),
+        greeted: [...greeted],
+      }),
+      'utf8',
+    );
+  } catch (e) {
+    console.error('상태 저장 실패:', e.message);
+  }
+}
+
+loadState();
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -134,6 +171,7 @@ async function handlePrompt(prompt, key) {
   const { text, sessionId, cost } = await runClaude(prompt, resumeId);
   if (sessionId) sessions.set(key, sessionId);
   addUsage(key, cost);
+  saveState(); // 세션 매핑·사용량을 디스크에 보존 → 재시작해도 대화가 이어진다
   return chunk(toSlackMrkdwn(text));
 }
 
@@ -142,6 +180,14 @@ async function handlePrompt(prompt, key) {
 // ─────────────────────────────────────────────────────────────
 const assistant = new Assistant({
   threadStarted: async ({ event, say, setSuggestedPrompts }) => {
+    // 재연결·재시작 시 Slack이 기존 스레드에 thread_started 를 다시 보내면 인사말이 중복된다.
+    // 이미 인사한 스레드면 건너뛴다. (디스크에 보존되어 재시작 후에도 유지)
+    const key = event?.assistant_thread?.thread_ts;
+    if (key && greeted.has(key)) return;
+    if (key) {
+      greeted.add(key);
+      saveState();
+    }
     await say('안녕하세요! MCE 캠페인 어시스턴트입니다. 무엇을 도와드릴까요?');
     await setSuggestedPrompts({
       title: '이런 걸 할 수 있어요',
