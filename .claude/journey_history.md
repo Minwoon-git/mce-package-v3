@@ -351,3 +351,28 @@
 - Journey 명: 신규회원 웰컴 알림톡
 - Journey ID: a29bba31-81b9-48d6-99c0-705edb0854fa
 - 상태: 성공 (Draft / 미발행)
+
+## 2026-06-16 — CP_028 신규회원동의분기알림톡
+
+- Journey ID: `3eb00069-b574-4e51-8b70-9e2ed32da08b`
+- Journey Key: `CP028-ConsentBranch-AlimTalk-Journey-20260616`
+- Journey Name: `신규회원동의분기알림톡`
+- 상태: Draft (미발행)
+- Event Definition Key: `CP028-ConsentBranch-AlimTalk-Entry-v1-20260616` (ID: `66cedd0d-d451-44aa-a34b-b2dd90ec6fa1`)
+- Entry DE: AllContact_260415 (`ba90ebf6-6338-f111-a5dc-5cba2c19f760`)
+- Automation ID: `76219201-b600-492f-95ad-2d4f3f76dcf6` (매일 11:00 KST, 시작 2026-06-20, Recurring)
+- 재진입: OnceAndDone (No re-entry)
+- 저니 구조: Decision Split(Marketing_Opt_In=Y) → [Yes] REST 알림톡 → Wait 2Days → Exit / [No] 즉시 Exit
+- 정의서: `campaign_definitions/CP_028_신규회원동의분기알림톡_20260616.xlsx`
+
+## 2026-06-16
+- 캠페인 ID: CP_030
+- Journey 명: CP030 멤버십등급가입시점별알림톡
+- Journey ID: b8ae714a-ab3e-4a80-a736-c9bf1b920051
+- 상태: 성공 (Draft / 미발행)
+
+## 2026-06-16 10:13
+- 캠페인 ID: CP_031
+- Journey 명: 멤버십 등급별 신규 온보딩
+- Journey ID: 157a6e41-ba2a-40dc-a965-ff719061e105
+- 상태: 성공 (Draft, 미발행)

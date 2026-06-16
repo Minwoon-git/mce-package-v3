@@ -114,6 +114,34 @@ function toSlackMrkdwn(md) {
     if (isRow(line) && i + 1 < lines.length && isSep(lines[i + 1])) {
       const header = cells(line);
       i += 2; // 헤더 + 구분선 건너뜀
+
+      // 2열 표(항목|내용, 예: STEP 4 결과 요약) → 저니 흐름도처럼 코드블록으로 줄맞춤 출력
+      if (header.length <= 2) {
+        const rows = [];
+        while (i < lines.length && isRow(lines[i])) {
+          const row = cells(lines[i]);
+          const label = (row[0] || '').replace(/\*\*/g, '').trim();
+          const val = (row[1] || '').replace(/\*\*/g, '').trim();
+          if (label) rows.push([label, val]);
+          i++;
+        }
+        if (rows.length) {
+          // 한글 등 전각 문자는 폭 2로 계산해 콜론 위치를 맞춘다
+          const w = (s) =>
+            [...s].reduce((a, ch) => a + (/[ᄀ-ᇿ⺀-꓏가-힣＀-￯]/.test(ch) ? 2 : 1), 0);
+          const maxW = Math.max(...rows.map((r) => w(r[0])));
+          out.push('```');
+          for (const [label, val] of rows) {
+            const pad = ' '.repeat(Math.max(0, maxW - w(label)));
+            out.push(val ? `${label}${pad} : ${val}` : label);
+          }
+          out.push('```');
+          out.push('');
+        }
+        continue;
+      }
+
+      // 3열 이상(캠페인 후보표 등) → 후보별 목록 + 구분선으로 펼침
       let n = 0;
       while (i < lines.length && isRow(lines[i])) {
         const row = cells(lines[i]);
