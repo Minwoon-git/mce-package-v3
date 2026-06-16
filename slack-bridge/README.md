@@ -92,6 +92,22 @@ node slack-bridge\cleanup.js <채널이름 또는 채널ID>
 
 ---
 
+## 사용 계정 · 사용량 (중요)
+
+봇은 매 요청마다 이 PC의 `claude` CLI(`claude -p`)를 실행한다. 따라서:
+
+- 봇은 **이 PC의 `claude` CLI에 로그인된 계정**으로 동작하며, **토큰·사용량도 그 계정에서 차감**된다. (데스크톱 Claude 앱에 로그인한 계정과 **다를 수 있다.**)
+- 봇이 `You've hit your session limit · resets ...` 같은 한도 메시지를 답하면, 그건 봇 오류가 아니라 **CLI 로그인 계정의 사용 한도**에 도달한 것이다. 데스크톱 앱 `/usage`가 여유로워 보여도, **그 계정이 CLI 계정과 다르면 무관**하다.
+- 현재 CLI 로그인 계정 확인: `C:\Users\<사용자>\.claude.json` 의 `emailAddress` 필드.
+
+**계정을 바꾸려면 (= 봇이 쓰는 계정 변경):**
+1. 터미널에서 `claude` 실행 → `/logout` → `/login` 으로 원하는 계정 로그인
+2. **브릿지 재시작** — `npm start --prefix slack-bridge` (이미 떠 있는 브릿지는 교체 전 인증을 계속 쓰므로, 새로 띄워야 새 계정이 반영된다)
+
+> CLI 계정 교체는 **사용량/과금 주체만** 바꾼다. SFMC(MCE) 접근·캠페인 기능은 별도의 MCP 엔드포인트 인증에 묶여 있어 **계정 교체와 무관**하다. (SFMC 연결 오류는 따로 재인증해야 한다.)
+
+---
+
 ## 참고
 - 봇은 사람이 "허용"을 못 누르므로 `--dangerously-skip-permissions` 로 자동 승인한다.
   보안이 신경 쓰이면 `.claude/settings.json` 의 `allowedTools` 화이트리스트(sfmc 도구만)로 대체 가능.
