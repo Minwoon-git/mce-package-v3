@@ -1,18 +1,21 @@
 // MCE Slack 브릿지 — Slack 메시지를 받아 로컬 Claude Code(CLI)로 처리하고 결과를 회신한다.
 // Socket Mode를 사용하므로 공개 IP·포트개방·터널이 필요 없다. 이 PC가 켜져 있기만 하면 된다.
+//
+// [Assistant 모드] 전용 어시스턴트 패널에서 대화한다(멘션 불필요·자동 스레드·"처리 중" 상태).
+//   - 답변이 어시스턴트 스레드 안에만 쌓이므로 채널이 더러워지지 않는다.
+//   - 채널 @멘션 방식도 호환용으로 함께 지원한다.
 require('dotenv').config();
-const { App } = require('@slack/bolt');
+const { App, Assistant } = require('@slack/bolt');
 const { spawn } = require('child_process');
 const path = require('path');
 
 // 프로젝트 루트 = 이 파일의 상위 폴더 (mce-campaign 스킬·sf-mce-mcp가 연결된 곳)
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
-// Slack 스레드(thread_ts) → Claude Code session_id 매핑.
-// 같은 스레드에서 다시 멘션하면 대화를 이어간다(=수동모드 질문/승인 흐름 처리).
+// 대화 스레드 → Claude Code session_id 매핑. 같은 스레드면 --resume 로 맥락을 이어간다.
 const sessions = new Map();
 
-// Slack 스레드(thread_ts) → 누적 사용량 { cost, turns }. "@봇 사용량" 으로 조회한다.
+// 대화 스레드 → 누적 사용량 { cost, turns }. "사용량" 으로 조회한다.
 const usage = new Map();
 
 const app = new App({
@@ -48,7 +51,6 @@ function runClaude(prompt, resumeId) {
           cost: parsed.total_cost_usd,
         });
       } catch {
-        // JSON 파싱 실패 시 원문 그대로 반환
         resolve({ text: stdout || stderr || '(출력 없음)', sessionId: undefined });
       }
     });
@@ -72,7 +74,6 @@ function toSlackMrkdwn(md) {
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    // 표 블록 감지: 헤더행 + 구분행(---) 패턴
     if (isRow(line) && i + 1 < lines.length && isSep(lines[i + 1])) {
       const header = cells(line);
       i += 2; // 헤더 + 구분선 건너뜀
@@ -99,8 +100,7 @@ function toSlackMrkdwn(md) {
   let s = out.join('\n');
   s = s.replace(/\*\*(.+?)\*\*/g, '*$1*').replace(/__(.+?)__/g, '*$1*'); // **굵게** → *굵게*
   s = s.replace(/^#{1,6}\s*(.+)$/gm, '*$1*'); // ### 헤딩 → *헤딩*
-  // 마크다운 가로 구분선(---, ***, ___)은 Slack에서 안 그려지므로 유니코드 가로줄로 치환
-  s = s.replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/gm, '──────────────────────────────');
+  s = s.replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/gm, '──────────────────────────────'); // 가로 구분선
   s = s.replace(/\n{3,}/g, '\n\n'); // 과도한 빈 줄 정리
   return s;
 }
@@ -112,19 +112,79 @@ function chunk(text, size = 3500) {
   return out;
 }
 
-// 봇을 멘션하면 그 텍스트를 명령어로 처리
+// 누적 사용량 적립
+function addUsage(key, cost) {
+  if (typeof cost !== 'number') return;
+  const u = usage.get(key) || { cost: 0, turns: 0 };
+  u.cost += cost;
+  u.turns += 1;
+  usage.set(key, u);
+}
+
+function usageText(key) {
+  const u = usage.get(key);
+  return u
+    ? `📊 이 대화 누적 사용량\n   • 처리한 요청: ${u.turns}회\n   • 누적 비용: $${u.cost.toFixed(4)}`
+    : '📊 이 대화에서 아직 처리한 요청이 없습니다.';
+}
+
+// 프롬프트를 처리해 Slack mrkdwn 결과 조각 배열을 돌려준다. (사용량 명령은 별도 처리)
+async function handlePrompt(prompt, key) {
+  const resumeId = sessions.get(key);
+  const { text, sessionId, cost } = await runClaude(prompt, resumeId);
+  if (sessionId) sessions.set(key, sessionId);
+  addUsage(key, cost);
+  return chunk(toSlackMrkdwn(text));
+}
+
+// ─────────────────────────────────────────────────────────────
+// Assistant 모드 — 전용 어시스턴트 패널 대화
+// ─────────────────────────────────────────────────────────────
+const assistant = new Assistant({
+  threadStarted: async ({ event, say, setSuggestedPrompts }) => {
+    await say('안녕하세요! MCE 캠페인 어시스턴트입니다. 무엇을 도와드릴까요?');
+    await setSuggestedPrompts({
+      title: '이런 걸 할 수 있어요',
+      prompts: [
+        { title: '신규회원 캠페인 추천', message: '신규회원 캠페인 추천해줘' },
+        { title: '최근 저니 목록', message: '최근 생성된 저니 3개 목록' },
+        { title: '이탈 고객 캠페인 생성', message: '이탈 고객 캠페인 만들어줘' },
+      ],
+    });
+  },
+
+  userMessage: async ({ message, say, setStatus }) => {
+    const prompt = (message.text || '').trim();
+    if (!prompt) return;
+    const key = message.thread_ts || message.ts; // 어시스턴트 스레드 단위
+
+    if (/^사용량\b|^usage\b/i.test(prompt)) {
+      await say(usageText(key));
+      return;
+    }
+
+    try {
+      await setStatus('처리 중…'); // 어시스턴트 패널의 "생각 중" 상태 표시
+      const parts = await handlePrompt(prompt, key);
+      for (const p of parts) await say(p); // say 는 자동으로 이 스레드에만 게시
+    } catch (err) {
+      await say(`❌ 오류: ${err.message}`);
+    }
+  },
+});
+
+app.assistant(assistant);
+
+// ─────────────────────────────────────────────────────────────
+// 채널 @멘션 모드 (호환용) — 스레드에 답한다
+// ─────────────────────────────────────────────────────────────
 app.event('app_mention', async ({ event, client }) => {
-  const prompt = event.text.replace(/<@[^>]+>/g, '').trim(); // 멘션 토큰 제거
+  const prompt = event.text.replace(/<@[^>]+>/g, '').trim();
   const threadTs = event.thread_ts || event.ts;
   if (!prompt) return;
 
-  // "사용량" 조회 명령: 이 스레드에서 누적된 비용만 답하고 종료 (Claude 호출 안 함)
   if (/^사용량\b|^usage\b/i.test(prompt)) {
-    const u = usage.get(threadTs);
-    const text = u
-      ? `📊 이 스레드 누적 사용량\n   • 처리한 요청: ${u.turns}회\n   • 누적 비용: $${u.cost.toFixed(4)}`
-      : '📊 이 스레드에서 아직 처리한 요청이 없습니다.';
-    await client.chat.postMessage({ channel: event.channel, thread_ts: threadTs, text });
+    await client.chat.postMessage({ channel: event.channel, thread_ts: threadTs, text: usageText(threadTs) });
     return;
   }
 
@@ -135,39 +195,23 @@ app.event('app_mention', async ({ event, client }) => {
   });
 
   try {
-    const resumeId = sessions.get(threadTs);
-    const { text, sessionId, cost } = await runClaude(prompt, resumeId);
-    if (sessionId) sessions.set(threadTs, sessionId); // 스레드별 세션 기억
-
-    // 스레드별 누적 사용량 적립 (응답에는 표시하지 않고, "사용량" 명령으로만 조회)
-    if (typeof cost === 'number') {
-      const u = usage.get(threadTs) || { cost: 0, turns: 0 };
-      u.cost += cost;
-      u.turns += 1;
-      usage.set(threadTs, u);
-    }
-
-    const parts = chunk(toSlackMrkdwn(text));
+    const parts = await handlePrompt(prompt, threadTs);
     await client.chat.update({ channel: event.channel, ts: thinking.ts, text: parts[0] });
     for (let i = 1; i < parts.length; i++) {
       await client.chat.postMessage({ channel: event.channel, thread_ts: threadTs, text: parts[i] });
     }
   } catch (err) {
-    await client.chat.update({
-      channel: event.channel,
-      ts: thinking.ts,
-      text: `❌ 오류: ${err.message}`,
-    });
+    await client.chat.update({ channel: event.channel, ts: thinking.ts, text: `❌ 오류: ${err.message}` });
   }
 });
 
 (async () => {
   if (!process.env.SLACK_BOT_TOKEN || !process.env.SLACK_APP_TOKEN) {
-    console.error('❌ .env 에 SLACK_BOT_TOKEN, SLACK_APP_TOKEN 을 먼저 채워주세요. (2번 가이드 참고)');
+    console.error('❌ .env 에 SLACK_BOT_TOKEN, SLACK_APP_TOKEN 을 먼저 채워주세요.');
     process.exit(1);
   }
   await app.start();
-  console.log('⚡ MCE Slack 브릿지 실행 중 (Socket Mode)');
+  console.log('⚡ MCE Slack 브릿지 실행 중 (Socket Mode · Assistant 모드)');
   console.log('   프로젝트 루트:', PROJECT_ROOT);
-  console.log('   채널에서 봇을 멘션해 보세요. 예) @MCE봇 이탈 고객 캠페인 만들어줘');
+  console.log('   좌측 사이드바의 봇(어시스턴트)을 열어 바로 입력하거나, 채널에서 @멘션 하세요.');
 })();

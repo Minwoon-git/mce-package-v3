@@ -8,7 +8,7 @@
     "start": "node bridge.js"
   },
   "dependencies": {
-    "@slack/bolt": "^3.22.0",
+    "@slack/bolt": "^4.7.3",
     "dotenv": "^16.4.5"
   }
 }

@@ -420,18 +420,23 @@ Slack 채널 (@봇 멘션)  ──▶  slack-bridge (Socket Mode)  ──▶  cl
         └───────────────────  결과 회신 (스레드)  ◀────────────────────┘
 ```
 
-- 봇이 받은 멘션 텍스트를 그대로 `claude -p`에 전달 → `CLAUDE.md`·`mce-campaign` 스킬·`sf-mce-mcp` MCP 도구가 **전부 그대로 적용**됩니다.
-- 같은 **스레드**에서 다시 멘션하면 `--resume`로 대화가 이어져 캠페인 선택·모드 선택·승인 등 **수동 모드 흐름**도 가능합니다.
+- 봇이 받은 텍스트를 그대로 `claude -p`에 전달 → `CLAUDE.md`·`mce-campaign` 스킬·`sf-mce-mcp` MCP 도구가 **전부 그대로 적용**됩니다.
+- 같은 **대화(스레드)** 에서 이어 말하면 `--resume`로 대화가 이어져 캠페인 선택·모드 선택·승인 등 **수동 모드 흐름**도 가능합니다.
 - 봇은 사람이 "허용"을 누를 수 없으므로 `--dangerously-skip-permissions`로 도구를 자동 승인합니다. (보안이 필요하면 `.claude/settings.json`의 `allowedTools` 화이트리스트로 대체 가능)
+
+**두 가지 대화 방식** (`@slack/bolt` v4):
+- **Assistant 모드 (기본)** — 좌측 사이드바의 전용 어시스턴트 패널에서 멘션 없이 대화합니다. 자동 스레드·"처리 중…" 상태가 표시되고 답변이 패널 안에만 쌓여 채널이 깨끗합니다.
+- **채널 @멘션 모드 (호환용)** — 채널에서 봇을 멘션하면 스레드로 답합니다.
 
 ### Slack 앱 설정 (토큰 2개 발급)
 
 1. https://api.slack.com/apps → **Create New App** → **From scratch** → 앱 이름·워크스페이스 선택
 2. **Settings → Socket Mode** 켜기 → **Basic Information → App-Level Tokens**에서 `connections:write` 스코프로 **`xapp-`** 토큰 발급
-3. **Features → OAuth & Permissions → Bot Token Scopes**에 `app_mentions:read`, `chat:write` 추가 (스코프를 추가하면 봇 사용자가 생성됨)
-4. **Features → Event Subscriptions** → Enable → **Add Bot User Event**에 `app_mention` 추가 → Save
-5. **Settings → Install App → Install to Workspace** → **`xoxb-`** Bot User OAuth Token 발급
-6. 표시 이름을 바꿨다면 **Install App에서 Reinstall** 해야 반영됨
+3. **Features → Agents & AI Apps**(또는 App Home의 Assistant 항목) **활성화** — Assistant 모드(사이드바 패널)를 쓰려면 필수
+4. **Features → OAuth & Permissions → Bot Token Scopes**에 `app_mentions:read`, `chat:write`, `assistant:write`, `im:history` 추가 (스코프를 추가하면 봇 사용자가 생성됨)
+5. **Features → Event Subscriptions** → Enable → **Add Bot User Event**에 `app_mention`, `assistant_thread_started`, `assistant_thread_context_changed`, `message.im` 추가 → Save
+6. **Settings → Install App → Install to Workspace** → **`xoxb-`** Bot User OAuth Token 발급
+7. 스코프·이벤트·표시 이름을 바꿨다면 **Install App에서 Reinstall** 해야 반영됨
 
 ### 실행
 
@@ -446,13 +451,18 @@ npm install --prefix slack-bridge
 npm start   --prefix slack-bridge
 ```
 
-콘솔에 `⚡ MCE Slack 브릿지 실행 중`이 뜨면 성공. 채널에 봇을 초대하고 멘션해 사용합니다.
+콘솔에 `⚡ MCE Slack 브릿지 실행 중 (Socket Mode · Assistant 모드)`이 뜨면 성공.
+
+- **Assistant 모드**: 좌측 사이드바에서 봇(어시스턴트)을 열어 바로 입력 (첫 진입 시 추천 프롬프트 표시)
+- **채널 @멘션 모드**: 채널에 봇을 초대하고 멘션해 사용
 
 ```
 /invite @봇이름
 @봇이름 이탈 고객 캠페인 만들어줘
-@봇이름 사용량                     # 이 스레드에서 누적된 비용 조회
+사용량                            # 대화 중 입력 → 누적 비용·요청 수 조회 (Assistant·멘션 공통)
 ```
+
+> 봇이 채널에 쌓은 자기 메시지를 정리하려면: `node slack-bridge\cleanup.js <채널이름>` (채널 `history` 스코프 필요)
 
 ### 출력·사용량 처리
 
@@ -475,7 +485,8 @@ mce-package-main/
 ├── package.json                       # 의존성 (exceljs 등)
 ├── campaign_definitions/              # 생성된 정의서 보관
 ├── slack-bridge/                      # Slack ↔ Claude Code 브릿지 (Socket Mode)
-│   ├── bridge.js                      #   멘션 처리·결과 변환·사용량 집계
+│   ├── bridge.js                      #   Assistant·멘션 처리·결과 변환·사용량 집계
+│   ├── cleanup.js                     #   봇 자기 메시지 일괄 삭제 유틸
 │   ├── .env.example                   #   SLACK_BOT_TOKEN / SLACK_APP_TOKEN
 │   └── README.md                      #   Slack 앱 설정·실행 가이드
 └── .claude/
