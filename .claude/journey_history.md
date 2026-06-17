@@ -394,3 +394,35 @@
 - Journey 명: 멤버십 신규회원 웰컴 이메일
 - Journey ID: da958a0a-367a-4e33-8bd6-e47e5c525d97
 - 상태: 성공 (Draft / 미발행)
+
+## 2026-06-16 11:43
+- 캠페인 ID: CP_035
+- Journey 명: 멤버십 유형별 신규 온보딩
+- Journey ID: 61521bdf-e310-4990-b272-0f5ddea89810
+- 상태: 성공 (Draft / 미발행)
+
+## 2026-06-16 11:28
+- 캠페인 ID: CP_034
+- Journey 명: 멤버십 신규회원 웰컴 이메일
+- Journey ID: da958a0a-367a-4e33-8bd6-e47e5c525d97
+- 상태: 성공 (Draft / 미발행)
+
+## 2026-06-16 02:53 — CP_036 멤버십 신규회원 웰컴 이메일
+
+- Journey ID: `366dd41a-d13c-4fa7-86aa-4df32885dd06`
+- Journey Key: `CP036-MembershipWelcome-20260616`
+- Journey Name: `멤버십 신규회원 웰컴 이메일 v1`
+- 상태: Draft (미발행)
+- Event Definition Key: `CP036-MembershipWelcome-Entry-20260616`
+- Event Definition ID: `a1142c6d-867e-4012-8348-6b760d1729fe`
+- Automation ID: `4e0aa175-dd58-401e-baac-1cb549ec06f6` (Recurring 매일 09:00 KST)
+- Entry DE: Membership_1 (`1682e4ca-363a-f111-a5dc-5cba2c19f760`)
+- 흐름: Entry → Email(신규회원 웰컴 이메일 (샘플), 64353) → Wait(1 Day) & Exit
+- 재진입: No re-entry (OnceAndDone)
+- 정의서: campaign_definitions/CP_036_멤버십신규회원웰컴이메일_20260616.xlsx
+
+## 2026-06-17
+- 캠페인 ID: CP_037
+- Journey 명: 멤버십 등급별 혜택 안내
+- Journey ID: a48f0764-cdb2-4d9d-b818-7b47a13a91bb
+- 상태: 성공 (Draft / 미발행)

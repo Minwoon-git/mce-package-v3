@@ -4,10 +4,11 @@
 // [Assistant 모드] 전용 어시스턴트 패널에서 대화한다(멘션 불필요·자동 스레드·"처리 중" 상태).
 //   - 답변이 어시스턴트 스레드 안에만 쌓이므로 채널이 더러워지지 않는다.
 //   - 채널 @멘션 방식도 호환용으로 함께 지원한다.
-require('dotenv').config();
+const path = require('path');
+// .env 는 항상 이 파일 옆(slack-bridge/.env)에서 로드 — 실행 위치(cwd)와 무관하게 동작
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { App, Assistant } = require('@slack/bolt');
 const { spawn } = require('child_process');
-const path = require('path');
 const fs = require('fs');
 
 // 프로젝트 루트 = 이 파일의 상위 폴더 (mce-campaign 스킬·sf-mce-mcp가 연결된 곳)
