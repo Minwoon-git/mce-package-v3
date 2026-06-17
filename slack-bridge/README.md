@@ -65,6 +65,35 @@ npm start --prefix slack-bridge
 
 콘솔에 `⚡ MCE Slack 브릿지 실행 중 (Socket Mode · Assistant 모드)` 이 뜨면 성공.
 
+> **PowerShell 실행 정책 오류 시** (`npm.ps1 파일을 로드할 수 없습니다 / PSSecurityException`) — `npm` 대신 **node로 직접** 실행하면 정책을 우회한다 (`.env` 는 파일 위치 기준으로 로드되므로 어느 폴더에서 실행해도 된다):
+> ```powershell
+> node slack-bridge\bridge.js
+> ```
+> 또는 `npm.cmd start --prefix slack-bridge` / 정책 완화 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+
+---
+
+## 자동 실행 (PC 켜질 때 — 선택)
+
+로그인할 때마다 봇이 **창 없이 자동 시작**되고 **죽으면 자동 재시작**되게 하려면, 동봉된 런처를 시작프로그램에 등록한다. (관리자 권한 불필요)
+
+- `run-bridge.cmd` — node로 브릿지를 실행하고, 종료되면 5초 후 재시작하는 루프. (저장소에 포함)
+- 시작프로그램 폴더(`shell:startup` = `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`)에 **창을 숨겨 `run-bridge.cmd` 를 호출하는 `.vbs`** 를 만들어 둔다. (PC별 경로라 저장소엔 미포함)
+
+`Startup\MCE-Slack-Bridge.vbs` 예시:
+```vbs
+Set sh = CreateObject("WScript.Shell")
+' 0 = 숨김 창, False = 대기 안 함 — 경로는 실제 프로젝트 위치로 교체
+sh.Run "cmd /c ""C:\...\mce-package-v3-main\slack-bridge\run-bridge.cmd""", 0, False
+```
+
+- **즉시 켜기**(재로그인 없이): `wscript.exe "<위 .vbs 경로>"`
+- **자동 실행 해제**: 위 `.vbs` 파일 삭제
+- 작업 스케줄러로도 가능하나, 환경에 따라 등록에 관리자 권한이 필요할 수 있어 **시작프로그램 폴더 방식이 더 간단**하다.
+- 창이 숨겨져 **로그가 안 보인다.** 문제 진단 시엔 자동 실행을 잠깐 끄고 `node slack-bridge\bridge.js` 로 직접 띄워 로그를 본다.
+
+> `.bat`/`.cmd` 는 반드시 **CRLF 줄바꿈**이어야 `goto`/`:label` 이 정상 동작한다. (LF 로 저장되면 자동 재시작 루프가 깨진다.)
+
 **사용 방법 (택1)**
 
 - **Assistant 모드** — 좌측 사이드바에서 봇(어시스턴트)을 열고 바로 입력. 첫 진입 시 추천 프롬프트가 뜬다.

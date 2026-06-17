@@ -471,8 +471,11 @@ npm start   --prefix slack-bridge
 - 봇이 쓰는 비용은 이 PC의 **`claude` CLI에 로그인된 계정의 사용 한도**에서 차감됩니다 (별도 달러 청구 아님). 이 계정은 데스크톱 앱에 로그인한 계정과 **다를 수 있습니다** — `.claude.json`의 `emailAddress`로 확인하세요. 봇이 `session limit` 메시지를 답하면 그 계정의 한도에 도달한 것입니다.
 - **계정을 바꾸려면**: 터미널에서 `claude` → `/logout` → `/login`으로 원하는 계정 로그인 후 **브릿지를 재시작**(`npm start --prefix slack-bridge`)해야 새 계정이 반영됩니다. (계정 교체는 사용량 주체만 바꾸며, SFMC 접근·기능과는 무관합니다.) 상세는 [`slack-bridge/README.md`](slack-bridge/README.md)의 "사용 계정 · 사용량" 참고.
 
-> ⚠️ 이 PC가 꺼지면 봇도 멈춥니다. 상시 운영하려면 절전 해제 또는 서비스 등록이 필요합니다.
+> ⚠️ 이 PC가 꺼지면 봇도 멈춥니다. 상시 운영하려면 절전 해제 또는 자동 실행 등록이 필요합니다.
 > 설정 상세는 [`slack-bridge/README.md`](slack-bridge/README.md) 참고.
+
+> **PowerShell 실행 정책 오류**(`npm.ps1 ... PSSecurityException`)면 `npm` 대신 `node slack-bridge\bridge.js` 로 실행하세요.
+> **로그인 시 자동 실행**을 원하면 `run-bridge.cmd`(자동 재시작 런처)를 시작프로그램에 등록합니다 — 방법은 [`slack-bridge/README.md`](slack-bridge/README.md)의 "자동 실행" 참고.
 
 ---
 
@@ -487,6 +490,7 @@ mce-package-main/
 ├── campaign_definitions/              # 생성된 정의서 보관
 ├── slack-bridge/                      # Slack ↔ Claude Code 브릿지 (Socket Mode)
 │   ├── bridge.js                      #   Assistant·멘션 처리·결과 변환·사용량 집계
+│   ├── run-bridge.cmd                 #   자동 실행/자동 재시작 런처 (시작프로그램용)
 │   ├── cleanup.js                     #   봇 자기 메시지 일괄 삭제 유틸
 │   ├── .env.example                   #   SLACK_BOT_TOKEN / SLACK_APP_TOKEN
 │   └── README.md                      #   Slack 앱 설정·실행 가이드
