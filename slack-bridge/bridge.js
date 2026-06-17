@@ -300,12 +300,17 @@ const assistant = new Assistant({
       return;
     }
 
+    let beat;
     try {
       await setStatus('처리 중…'); // 어시스턴트 패널의 "생각 중" 상태 표시
+      // 하트비트: 저니 생성처럼 수 분 걸리는 작업 중 상태 표식이 사라지지 않도록 주기적 재설정
+      beat = setInterval(() => setStatus('처리 중…').catch(() => {}), 25000);
       const parts = await handlePrompt(prompt, key);
       for (const p of parts) await say(p); // say 는 자동으로 이 스레드에만 게시
     } catch (err) {
       await say(`❌ 오류: ${err.message}`);
+    } finally {
+      if (beat) clearInterval(beat); // 작업 끝나면 하트비트 정지
     }
   },
 });

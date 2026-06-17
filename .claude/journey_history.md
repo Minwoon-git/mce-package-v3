@@ -426,3 +426,9 @@
 - Journey 명: 멤버십 등급별 혜택 안내
 - Journey ID: a48f0764-cdb2-4d9d-b818-7b47a13a91bb
 - 상태: 성공 (Draft / 미발행)
+
+## 2026-06-17 (CP_038)
+- 캠페인 ID: CP_038
+- Journey 명: 신규회원 온보딩 2단계 알림톡
+- Journey ID: 84dfc772-5049-452c-9d8f-43154fe96161
+- 상태: 성공 (Draft / 미발행)
